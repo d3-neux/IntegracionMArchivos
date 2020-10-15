@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <ApplicationIcon />
+    <StartupObject />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="MFaaP.MFWSClient">
+      <HintPath>..\MFaaP.MFWSClient.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="RestSharp">
+      <HintPath>..\RestSharp.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
