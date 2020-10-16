@@ -1,14 +1,13 @@
-﻿using MFilesWebAPI.Models;
-using OperacionesMFiles;
+﻿using OperacionesMFiles;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Configuration;
 using System.Web.Http;
+using MFilesDocument = OperacionesMFiles.MFilesDocument;
 
 namespace MFilesWebAPI.Controllers
 {
@@ -27,7 +26,7 @@ namespace MFilesWebAPI.Controllers
         private static readonly string pass      = WebConfigurationManager.AppSettings["MFILES_PASS"].ToString();
         private static readonly int codigoERP    = Int32.Parse(WebConfigurationManager.AppSettings["MFILES_ERP_ID"].ToString());
 
-        private static Dictionary<string, int> IdPropiedades = new Dictionary<string, int>
+        private static readonly Dictionary<string, int> IdPropiedades = new Dictionary<string, int>
             {
                 ["codigoERP"] = Int32.Parse(WebConfigurationManager.AppSettings["MFILES_ERP_ID"].ToString()),
                 ["empresa"] = Int32.Parse(WebConfigurationManager.AppSettings["MFILES_EMPRESA"].ToString()),
@@ -42,70 +41,64 @@ namespace MFilesWebAPI.Controllers
         private static ConsultarDocumentos objConsultarDocs = new ConsultarDocumentos(server, boveda, user, pass, IdPropiedades);
 
         /// <summary>
-        /// Obtiene los archivos relacionados al parámetro Código ERP como Lista de Objetos
+        /// Obtiene tupla de bytes (archivo) y extensión del documento relacionado al código ERP
         /// </summary>
-        /// <param name="idERP">Código ERP</param>
+        /// <param name="codigoERP">Código ERP</param>
         /// <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado
         /// </returns>
-
-        public List<Tuple<byte[], string>> Get(string idERP)
+        // API/MFiles/{ID}
+        [HttpGet]
+        [Route("api/MFiles/")]
+        public Tuple<byte[], string> Get(string codigoERP)
         {
-            return objConsultarDocs.GetFiles(codigoERP, idERP); ;
+            return objConsultarDocs.GetFile(MFilesController.codigoERP, codigoERP); ;
         }
 
-        
 
-
-
-
-        /// <summary>
-        ///  Descarga un solo archivo relacionado al parámetro Código ERP
+     /// <summary>
+        ///  Descarga el archivo relacionado al código ERP
         /// </summary>
-        /// <param name="idERP">Código ERP</param>
+        /// <param name="codigoERP">Código ERP</param>
         /// <returns>HttpResponseMessage
         /// </returns>
         [HttpGet]
-        [Route("api/MFiles/downloadFirst/")]
-        public HttpResponseMessage GetDocFirstFile(string idERP)
+        [Route("api/MFiles/downloadFile/")]
+        public HttpResponseMessage GetDocFirstFile(string codigoERP)
         {
             var result = new HttpResponseMessage(HttpStatusCode.OK);
 
-            var archivosDescargados = objConsultarDocs.GetFiles(codigoERP, idERP);
+            var archivosDescargados = objConsultarDocs.GetFile(MFilesController.codigoERP, codigoERP);
 
-            foreach (Tuple<byte[], string> item in archivosDescargados)
-            {
-                var file = item.Item1;
-                var extension = item.Item2;
+            var file = archivosDescargados.Item1;
+            var extension = archivosDescargados.Item2;
 
-                string fileName = $@"{Guid.NewGuid()}." + extension; 
+            string fileName = $@"{Guid.NewGuid()}." + extension;
 
-                System.Diagnostics.Debug.WriteLine($"\tFile: {fileName}");
+            System.Diagnostics.Debug.WriteLine($"\tArchivo descargado: {fileName}");
 
-                var fileMemStream = new MemoryStream(file);
-                result.Content = new StreamContent(fileMemStream);
+            var fileMemStream = new MemoryStream(file);
+            result.Content = new StreamContent(fileMemStream);
 
-                var headers = result.Content.Headers;
-                headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-                headers.ContentDisposition.FileName = fileName;
-                headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                headers.ContentLength = fileMemStream.Length;
-                
-                return result;
+            var headers = result.Content.Headers;
+            headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+            headers.ContentDisposition.FileName = fileName;
+            headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            headers.ContentLength = fileMemStream.Length;
 
-            }
-            return null;
+            return result;
 
         }
 
         /// <summary>
         /// Actualiza la información del Documento en Mfiles
         /// </summary>
-        /// <param name="Documento"></param>
+        /// <param name="Documento">Objecto con la información a actualizar del documento</param>
 
-        [HttpPost] 
+        [HttpPost]
+        [Route("api/MFiles/")]
         public String Post([FromBody] MFilesDocument Documento)
         {
-            var indexado = objConsultarDocs.IndexarDocumento(Documento.CodigoERP, Documento.Empresa, Documento.NumDocumento, Documento.NumFacturaRetenida, Documento.RucEmisor, Documento.FechaEmision, Documento.Valor);
+            var indexado = objConsultarDocs.IndexarDocumento(Documento);
 
             if (indexado != null)
                 return $"Documento indexado exitosamente ID {indexado} - { DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss")}";

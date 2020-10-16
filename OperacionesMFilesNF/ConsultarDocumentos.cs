@@ -11,75 +11,50 @@ namespace OperacionesMFiles
     {
         private static MFWSClient client;
 
-        public static string rutaTemp = Path.Combine(Path.GetTempPath(), "mfilesData");
+        public static string rutaTemp = Path.Combine(Path.GetTempPath(), "MFilesAPIData");
         private static Dictionary<string, int> IdPropiedades;
 
-        //private static List<String> documentos = new List<string>();
-
-
-        /*public static void Main(string[] args)
-        {
-            ConsultarDocumentos obj = new ConsultarDocumentos();
-
-            var archivosDescargados = obj.GetFiles();
-
-
-            if (archivosDescargados == null)
-                return;
-
-            int i = 0;
-
-            foreach (Tuple<byte[], string> item in archivosDescargados)
-            {
-                i++;
-                var file = item.Item1;
-                var extension = item.Item2;
-
-                string nuevaRuta = Path.Combine(rutaTemp, $"newFile{i}." + extension);
-
-                System.Diagnostics.Debug.WriteLine($"\tFile: {nuevaRuta}");
-                File.WriteAllBytes( nuevaRuta, file);
-            }
-
-        }*/
-
-
+        /// <summary>
+        /// Inicializa el cliente de MFiles y recibe la lista de propiedades;
+        /// </summary>
+        /// <param name="server">URL del servidor de M-Files</param>
+        /// <param name="boveda">GUID de la bóveda de Motransa</param>
+        /// <param name="user">Usuario</param>
+        /// <param name="pass">Contraseña</param>
+        /// <param name="IdPropiedades">Diccionario con nombres y id de propiedades</param>
         public ConsultarDocumentos(String server, String boveda, String user, String pass, Dictionary<string, int> IdPropiedades)
         {
             client = new MFWSClient(server);
-            //Conectar a bóveda
-
+            
             client.AuthenticateUsingCredentials(
                  Guid.Parse(boveda),    //id de boveda
                      user,                  //usuario
                      pass);
 
             ConsultarDocumentos.IdPropiedades = IdPropiedades;
-
-
-
         }
 
         /// <summary>
-        /// Devuelve una lista de tuplas con el archivo en bytes y su extensión
+        /// Devuelve una tupla del archivo en bytes y su extensión
         /// </summary>
-        /// <param name="erpID">Código ERP del documento consultado</param>
+        /// <param name="codigoERP">Código ERP del documento consultado</param>
         /// <param name="propertyID">ID de la propiedad de M-Files</param>
         /// <returns></returns>
-        public List<Tuple<byte[], string>> GetFiles(int propertyID, String erpID)
+        public Tuple<byte[], string> GetFile(int propertyID, String codigoERP)
         {
-            List< Tuple<byte[], string> > archivosDescargados = new List<Tuple<byte[], string>>();
+            Tuple<byte[], string> archivosDescargados = new Tuple<byte[], string>(null, "ERROR AL OBTENER ARCHIVOS");
 
             try
             {
-                var condition = new TextPropertyValueSearchCondition(propertyID, erpID);
+                var condition = new TextPropertyValueSearchCondition(propertyID, codigoERP);
 
                 var results = client.ObjectSearchOperations.SearchForObjectsByConditions(condition);
 
                 if (results.Length == 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("No hay resultados");
-                    return null;
+                    var errorStr = $"Búsqueda de CodigoERP [{codigoERP}] no devolvió resultados";
+                    System.Diagnostics.Debug.WriteLine(errorStr);
+                    return new Tuple<byte[], string>(null, errorStr);
                 }
 
                 foreach (var objectVersion in results)
@@ -97,25 +72,27 @@ namespace OperacionesMFiles
 
                         // Download the file data.
                         client.ObjectFileOperations.DownloadFile(objectVersion.ObjVer.Type,
-                           objectVersion.ObjVer.ID,
-                           objectVersion.Files[0].ID,
-                           fileName,
-                           objectVersion.ObjVer.Version);
+                            objectVersion.ObjVer.ID,
+                            objectVersion.Files[0].ID,
+                            fileName,
+                            objectVersion.ObjVer.Version);
 
                         if(!File.Exists(fileName))
                         {
-                            System.Diagnostics.Debug.WriteLine("No encontrado");
+                            var errorStr = $"ERROR EN LA DESCARGA DE ARCHIVO [{fileName}]";
+                            System.Diagnostics.Debug.WriteLine(errorStr);
+                            return new Tuple<byte[], string>(null, errorStr);
 
                         }
 
-                        System.Diagnostics.Debug.WriteLine($"\t\tFile: {file.Name} output to {fileName}");
+                        System.Diagnostics.Debug.WriteLine($"\tArchivo temporal descargado {fileName}");
 
                         var archivoBytes = File.ReadAllBytes(fileName);
 
-                        archivosDescargados.Add(Tuple.Create(archivoBytes , file.Extension));
+                        archivosDescargados = Tuple.Create(archivoBytes , file.Extension);
 
                         File.Delete(fileName);
-
+                        System.Diagnostics.Debug.WriteLine($"\tArchivo temporal borrado {fileName}");
                     }
                 }
             }
@@ -129,40 +106,35 @@ namespace OperacionesMFiles
 
 
         /// <summary>
-        /// Actualiza los metadatos del documento que coincida con el Código ERP
+        /// Indexa el documento con la información recibida por el web service
         /// </summary>
-        /// <param name="erpID">Código ERP del documento a actualizar</param>
-        /// <param name="empresa">Nombre de Empresa</param>
-        /// <param name="numDocumento">Número de documento</param>
-        /// <param name="numFacturaRetenida">Número de factura retenida</param>
-        /// <param name="rucEmisor">Ruc Emisor del documento</param>
-        /// <param name="fechaEmision">Fecha de emisión</param>
-        /// <param name="valor">Valor</param>
+        /// <param name="documento"></param>
         /// <returns></returns>
         
-        public String IndexarDocumento(string codigoERP, string empresa, string numDocumento, string numFacturaRetenida, string rucEmisor, string fechaEmision, string valor)
+        public String IndexarDocumento(MFilesDocument documento)
         {
-            System.Diagnostics.Debug.WriteLine($"\tFile: {empresa}");
-
-
-            var DocumentoMfiles = GetDocumentObjVersion(codigoERP);
+            System.Diagnostics.Debug.WriteLine($"\tDocumento Actual: {documento.ToString()}");
+            
+            var DocumentoMfiles = GetDocumentObjVersion(documento.CodigoERP);
 
             if (DocumentoMfiles == null)
-                return null;
+                return "Error al obtener ObjVersion";
             
-            var PropiedadesIndexadas = CrearPropiedades(empresa, numDocumento, numFacturaRetenida, rucEmisor, fechaEmision, valor);
+            var PropiedadesIndexadas = CrearPropiedades(documento);
 
+            //Se actualizan las propiedades
             var resultado = client.ObjectPropertyOperations.SetProperties(DocumentoMfiles.ObjVer, PropiedadesIndexadas, false, CancellationToken.None);
 
             if (resultado == null)
                 return null;
-            
-            System.Diagnostics.Debug.WriteLine("RESULTADO: " + resultado.ObjVer.ID);
 
-            return resultado.ObjVer.ID.ToString();
+            var errStr = $"Documento indexado ID [{resultado.ObjVer.ID.ToString()}]";
+            
+            System.Diagnostics.Debug.WriteLine(errStr);
+            return errStr;
         }
 
-        private PropertyValue[] CrearPropiedades(string empresa, string numDocumento, string numFacturaRetenida, string rucEmisor, string fechaEmision, string valor)
+        private PropertyValue[] CrearPropiedades(MFilesDocument documento)
         {
 
             //Se crean las propiedades (Metadatos)
@@ -171,37 +143,37 @@ namespace OperacionesMFiles
                     new PropertyValue //empresa
                     {
                         PropertyDef = IdPropiedades["empresa"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = empresa}
+                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = documento.Empresa}
                     },
 
                     new PropertyValue //numDocumento
                     {
                         PropertyDef = IdPropiedades["numDocumento"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = numDocumento}
+                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = documento.NumDocumento}
                     },
 
                     new PropertyValue //numFacturaRetenida
                     {
                         PropertyDef = IdPropiedades["numFacturaRetenida"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = numFacturaRetenida}
+                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = documento.NumFacturaRetenida}
                     },
 
                     new PropertyValue //rucEmisor
                     {
                         PropertyDef = IdPropiedades["rucEmisor"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = rucEmisor}
+                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = documento.RucEmisor}
                     },
 
                     new PropertyValue //fechaEmision
                     {
                         PropertyDef = IdPropiedades["fechaEmision"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Date, Value = fechaEmision}
+                        TypedValue = new TypedValue { DataType = MFDataType.Date, Value = documento.FechaEmision}
                     },
 
                     new PropertyValue //valor
                     {
                         PropertyDef = IdPropiedades["valor"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Floating, Value = valor}
+                        TypedValue = new TypedValue { DataType = MFDataType.Floating, Value = documento.Valor}
                     },
 
 
