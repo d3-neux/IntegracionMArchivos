@@ -492,22 +492,20 @@
             Obtiene tupla de bytes (archivo) y extensión del documento relacionado al código ERP
             </summary>
             <param name="codigoERP">Código ERP</param>
-            <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado
-            </returns>
+            <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado</returns>
         </member>
         <member name="M:MFilesWebAPI.Controllers.MFilesController.GetDocFirstFile(System.String)">
             <summary>
              Descarga el archivo relacionado al código ERP
             </summary>
             <param name="codigoERP">Código ERP</param>
-            <returns>HttpResponseMessage
-            </returns>
+            <returns>HttpResponseMessage con el archivo como contenido </returns>
         </member>
         <member name="M:MFilesWebAPI.Controllers.MFilesController.Post(OperacionesMFiles.MFilesDocument)">
             <summary>
             Actualiza la información del Documento en Mfiles
             </summary>
-            <param name="Documento">Objecto con la información a actualizar del documento</param>
+            <param name="Documento">Objeto con la información a actualizar del documento</param>
         </member>
     </members>
 </doc>

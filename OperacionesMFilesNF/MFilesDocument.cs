@@ -6,7 +6,7 @@ using System.Web;
 namespace OperacionesMFiles
 {
     /// <summary>
-    /// 
+    /// Representa un documento a ser indexado en MFiles
     /// </summary>
     public class MFilesDocument
     {

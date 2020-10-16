@@ -19,9 +19,7 @@ namespace MFilesWebAPI.Controllers
     /// </summary>
     public class MFilesController : ApiController
     {
-
         
-
         private static readonly string server    = WebConfigurationManager.AppSettings["MFILES_SERVER"].ToString();
         private static readonly string boveda    = WebConfigurationManager.AppSettings["MFILES_VAULT"].ToString();
         private static readonly string user      = WebConfigurationManager.AppSettings["MFILES_USER"].ToString();
@@ -44,8 +42,8 @@ namespace MFilesWebAPI.Controllers
         /// Obtiene tupla de bytes (archivo) y extensión del documento relacionado al código ERP
         /// </summary>
         /// <param name="codigoERP">Código ERP</param>
-        /// <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado
-        /// </returns>
+        /// <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado</returns>
+        
         // API/MFiles/{ID}
         [HttpGet]
         [Route("api/MFiles/")]
@@ -60,8 +58,7 @@ namespace MFilesWebAPI.Controllers
         ///  Descarga el archivo relacionado al código ERP
         /// </summary>
         /// <param name="codigoERP">Código ERP</param>
-        /// <returns>HttpResponseMessage
-        /// </returns>
+        /// <returns>HttpResponseMessage con el archivo como contenido </returns>
         [HttpGet]
         [Route("api/MFiles/downloadFile/")]
         public HttpResponseMessage GetDocFirstFile(string codigoERP)
@@ -99,18 +96,15 @@ namespace MFilesWebAPI.Controllers
         /// <summary>
         /// Actualiza la información del Documento en Mfiles
         /// </summary>
-        /// <param name="Documento">Objecto con la información a actualizar del documento</param>
+        /// <param name="Documento">Objeto con la información a actualizar del documento</param>
 
-        [HttpPost]
+        [HttpPut]
         [Route("api/MFiles/")]
         public String Post([FromBody] MFilesDocument Documento)
         {
            //Devuelve el resultado de la indexación
             return objConsultarDocs.IndexarDocumento(Documento);
         }
-
-
-
 
         /*
         /// <summary>

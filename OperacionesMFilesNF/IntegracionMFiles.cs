@@ -39,7 +39,7 @@ namespace OperacionesMFiles
         /// </summary>
         /// <param name="codigoERP">Código ERP del documento consultado</param>
         /// <param name="propertyID">ID de la propiedad de M-Files</param>
-        /// <returns></returns>
+        /// <returns>Tupla con el archivo en byte[] y string con la extension</returns>
         public Tuple<byte[], string> GetFile(int propertyID, String codigoERP)
         {
             Tuple<byte[], string> archivosDescargados = new Tuple<byte[], string>(null, "ERROR AL OBTENER ARCHIVOS");
@@ -100,7 +100,6 @@ namespace OperacionesMFiles
             {
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
             }
-
             return archivosDescargados;
         }
 
@@ -108,12 +107,11 @@ namespace OperacionesMFiles
         /// <summary>
         /// Indexa el documento con la información recibida por el web service
         /// </summary>
-        /// <param name="documento"></param>
-        /// <returns></returns>
-        
+        /// <param name="documento">Objeto de la clase MFIlesDocument</param>
+        /// <returns>Respusta de indexación del documento</returns>
         public String IndexarDocumento(MFilesDocument documento)
         {
-            System.Diagnostics.Debug.WriteLine($"\tDocumento Actual: {documento.ToString()}");
+            System.Diagnostics.Debug.WriteLine($"\tDocumento Actual: {documento}");
 
             try
             {
@@ -128,25 +126,25 @@ namespace OperacionesMFiles
                 var resultado = client.ObjectPropertyOperations.SetProperties(DocumentoMfiles.ObjVer, PropiedadesIndexadas, false, CancellationToken.None);
 
                 if (resultado == null)
-                    return null;
+                    return "Error al actualizar propiedades";
 
-                var msgStr = $"Documento {resultado.ObjVer.ID.ToString()} indexado exitosamente - { DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss")}";
-
-
+                var msgStr = $"Documento {resultado.ObjVer.ID} indexado exitosamente - { DateTime.Now:dd/MM/yyyy HH:mm:ss}";
 
                 System.Diagnostics.Debug.WriteLine(msgStr);
                 return msgStr;
             }
-
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
             }
-
-            return $"Error desconocido al indexar documentos { DateTime.Now.ToString("MM / dd / yyyy HH: mm: ss")}";
-
+            return $"Error desconocido al indexar documentos { DateTime.Now:dd/MM/yyyy HH:mm:ss}";
         }
 
+        /// <summary>
+        /// Crea array de propiedades del documento a actualizar
+        /// </summary>
+        /// <param name="documento">Recibe objeto de la clase MFilesDocument</param>
+        /// <returns>PropertyValue[] </returns>
         private PropertyValue[] CrearPropiedades(MFilesDocument documento)
         {
 
@@ -193,6 +191,11 @@ namespace OperacionesMFiles
                 };
         }
 
+        /// <summary>
+        /// Obtiene un objVersion que coindica con el parámetro de búsqueda
+        /// </summary>
+        /// <param name="codigoERP">Código ERP del documento</param>
+        /// <returns>ObjectVersion del documento encontrado</returns>
         private ObjectVersion GetDocumentObjVersion(string codigoERP)
         {
             var condition = new TextPropertyValueSearchCondition(IdPropiedades["codigoERP"], codigoERP);
