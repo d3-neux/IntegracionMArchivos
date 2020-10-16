@@ -20,23 +20,23 @@ namespace MFilesWebAPI.Controllers
     public class MFilesController : ApiController
     {
 
+        
+
         private static readonly string server    = WebConfigurationManager.AppSettings["MFILES_SERVER"].ToString();
         private static readonly string boveda    = WebConfigurationManager.AppSettings["MFILES_VAULT"].ToString();
         private static readonly string user      = WebConfigurationManager.AppSettings["MFILES_USER"].ToString();
         private static readonly string pass      = WebConfigurationManager.AppSettings["MFILES_PASS"].ToString();
-        private static readonly int codigoERP    = Int32.Parse(WebConfigurationManager.AppSettings["MFILES_ERP_ID"].ToString());
 
         private static readonly Dictionary<string, int> IdPropiedades = new Dictionary<string, int>
-            {
-                ["codigoERP"] = Int32.Parse(WebConfigurationManager.AppSettings["MFILES_ERP_ID"].ToString()),
-                ["empresa"] = Int32.Parse(WebConfigurationManager.AppSettings["MFILES_EMPRESA"].ToString()),
-                ["numDocumento"] = Int32.Parse(WebConfigurationManager.AppSettings["MFILES_NUM_DOCUMENTO"].ToString()),
-                ["numFacturaRetenida"] = Int32.Parse(WebConfigurationManager.AppSettings["MFILES_NUM_FACTURA_RETENIDA"].ToString()),
-                ["rucEmisor"] = Int32.Parse(WebConfigurationManager.AppSettings["MFILES_RUC_EMISOR"].ToString()),
-                ["fechaEmision"] = Int32.Parse(WebConfigurationManager.AppSettings["MFILES_FECHA_EMISION"].ToString()),
-                ["valor"] = Int32.Parse(WebConfigurationManager.AppSettings["MFILES_VALOR"].ToString())
+        {
+            ["codigoERP"]           = Int32.Parse(WebConfigurationManager.AppSettings["CODIGO_ERP"].ToString()),
+            ["empresa"]             = Int32.Parse(WebConfigurationManager.AppSettings["EMPRESA"].ToString()),
+            ["numDocumento"]        = Int32.Parse(WebConfigurationManager.AppSettings["NUM_DOCUMENTO"].ToString()),
+            ["numFacturaRetenida"]  = Int32.Parse(WebConfigurationManager.AppSettings["NUM_FACTURA_RETENIDA"].ToString()),
+            ["rucEmisor"]           = Int32.Parse(WebConfigurationManager.AppSettings["RUC_EMISOR"].ToString()),
+            ["fechaEmision"]        = Int32.Parse(WebConfigurationManager.AppSettings["FECHA_EMISION"].ToString()),
+            ["valor"]               = Int32.Parse(WebConfigurationManager.AppSettings["VALOR"].ToString())
         };
-
 
         private static IntegracionMFiles objConsultarDocs = new IntegracionMFiles(server, boveda, user, pass, IdPropiedades);
 
@@ -51,11 +51,12 @@ namespace MFilesWebAPI.Controllers
         [Route("api/MFiles/")]
         public Tuple<byte[], string> Get(string codigoERP)
         {
-            return objConsultarDocs.GetFile(MFilesController.codigoERP, codigoERP); ;
+            //Devuelve el objeto como respuesta
+            return objConsultarDocs.GetFile(IdPropiedades["codigoERP"], codigoERP); ;
         }
 
 
-     /// <summary>
+        /// <summary>
         ///  Descarga el archivo relacionado al código ERP
         /// </summary>
         /// <param name="codigoERP">Código ERP</param>
@@ -65,28 +66,34 @@ namespace MFilesWebAPI.Controllers
         [Route("api/MFiles/downloadFile/")]
         public HttpResponseMessage GetDocFirstFile(string codigoERP)
         {
-            var result = new HttpResponseMessage(HttpStatusCode.OK);
+            
+            //Descarga los archivos usando el Código ERP
+            var archivosDescargados = objConsultarDocs.GetFile(IdPropiedades["codigoERP"], codigoERP);
 
-            var archivosDescargados = objConsultarDocs.GetFile(MFilesController.codigoERP, codigoERP);
-
+            //Obtiene el archivo en bytes y la extención
             var file = archivosDescargados.Item1;
             var extension = archivosDescargados.Item2;
-
+            
+            //Genera un nombre único para el archivo
             string fileName = $@"{Guid.NewGuid()}." + extension;
-
             System.Diagnostics.Debug.WriteLine($"\tArchivo descargado: {fileName}");
 
+            //Se crea el archivo y se lo asigna al mensaje de respuesta
+
             var fileMemStream = new MemoryStream(file);
-            result.Content = new StreamContent(fileMemStream);
+            
+            var result = new HttpResponseMessage(HttpStatusCode.OK);
+                result.Content = new StreamContent(fileMemStream);
+
+            //se define el header de la respuesta
 
             var headers = result.Content.Headers;
-            headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-            headers.ContentDisposition.FileName = fileName;
-            headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-            headers.ContentLength = fileMemStream.Length;
+                headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+                headers.ContentDisposition.FileName = fileName;
+                headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                headers.ContentLength = fileMemStream.Length;
 
             return result;
-
         }
 
         /// <summary>
@@ -98,8 +105,8 @@ namespace MFilesWebAPI.Controllers
         [Route("api/MFiles/")]
         public String Post([FromBody] MFilesDocument Documento)
         {
+           //Devuelve el resultado de la indexación
             return objConsultarDocs.IndexarDocumento(Documento);
-
         }
 
 
