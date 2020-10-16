@@ -38,7 +38,7 @@ namespace MFilesWebAPI.Controllers
         };
 
 
-        private static ConsultarDocumentos objConsultarDocs = new ConsultarDocumentos(server, boveda, user, pass, IdPropiedades);
+        private static IntegracionMFiles objConsultarDocs = new IntegracionMFiles(server, boveda, user, pass, IdPropiedades);
 
         /// <summary>
         /// Obtiene tupla de bytes (archivo) y extensión del documento relacionado al código ERP
@@ -98,12 +98,7 @@ namespace MFilesWebAPI.Controllers
         [Route("api/MFiles/")]
         public String Post([FromBody] MFilesDocument Documento)
         {
-            var indexado = objConsultarDocs.IndexarDocumento(Documento);
-
-            if (indexado != null)
-                return $"Documento indexado exitosamente ID {indexado} - { DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss")}";
-            else
-                return "Documento no indexado " + DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss");
+            return objConsultarDocs.IndexarDocumento(Documento);
 
         }
 

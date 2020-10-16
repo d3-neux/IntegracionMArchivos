@@ -20,7 +20,7 @@ namespace OperacionesMFiles
 
         public override string ToString()
         {
-            return String.Format("{0}:{1}:{2}:{3}:{4}:{5}:{2}:{2}", CodigoERP, Empresa, NumDocumento, NumFacturaRetenida, RucEmisor, FechaEmision, Valor);
+            return String.Format("{0}:{1}:{2}:{3}:{4}:{5}", CodigoERP, Empresa, NumDocumento, NumFacturaRetenida, RucEmisor, FechaEmision, Valor);
         }
 
 

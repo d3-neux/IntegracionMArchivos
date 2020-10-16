@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace OperacionesMFiles
 {
-    public class ConsultarDocumentos
+    public class IntegracionMFiles
     {
         private static MFWSClient client;
 
@@ -22,7 +22,7 @@ namespace OperacionesMFiles
         /// <param name="user">Usuario</param>
         /// <param name="pass">Contraseña</param>
         /// <param name="IdPropiedades">Diccionario con nombres y id de propiedades</param>
-        public ConsultarDocumentos(String server, String boveda, String user, String pass, Dictionary<string, int> IdPropiedades)
+        public IntegracionMFiles(String server, String boveda, String user, String pass, Dictionary<string, int> IdPropiedades)
         {
             client = new MFWSClient(server);
             
@@ -31,7 +31,7 @@ namespace OperacionesMFiles
                      user,                  //usuario
                      pass);
 
-            ConsultarDocumentos.IdPropiedades = IdPropiedades;
+            IntegracionMFiles.IdPropiedades = IdPropiedades;
         }
 
         /// <summary>
@@ -114,24 +114,37 @@ namespace OperacionesMFiles
         public String IndexarDocumento(MFilesDocument documento)
         {
             System.Diagnostics.Debug.WriteLine($"\tDocumento Actual: {documento.ToString()}");
-            
-            var DocumentoMfiles = GetDocumentObjVersion(documento.CodigoERP);
 
-            if (DocumentoMfiles == null)
-                return "Error al obtener ObjVersion";
-            
-            var PropiedadesIndexadas = CrearPropiedades(documento);
+            try
+            {
+                var DocumentoMfiles = GetDocumentObjVersion(documento.CodigoERP);
 
-            //Se actualizan las propiedades
-            var resultado = client.ObjectPropertyOperations.SetProperties(DocumentoMfiles.ObjVer, PropiedadesIndexadas, false, CancellationToken.None);
+                if (DocumentoMfiles == null)
+                    return "Error al obtener ObjVersion";
 
-            if (resultado == null)
-                return null;
+                var PropiedadesIndexadas = CrearPropiedades(documento);
 
-            var errStr = $"Documento indexado ID [{resultado.ObjVer.ID.ToString()}]";
-            
-            System.Diagnostics.Debug.WriteLine(errStr);
-            return errStr;
+                //Se actualizan las propiedades
+                var resultado = client.ObjectPropertyOperations.SetProperties(DocumentoMfiles.ObjVer, PropiedadesIndexadas, false, CancellationToken.None);
+
+                if (resultado == null)
+                    return null;
+
+                var msgStr = $"Documento {resultado.ObjVer.ID.ToString()} indexado exitosamente - { DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss")}";
+
+
+
+                System.Diagnostics.Debug.WriteLine(msgStr);
+                return msgStr;
+            }
+
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+            }
+
+            return $"Error desconocido al indexar documentos { DateTime.Now.ToString("MM / dd / yyyy HH: mm: ss")}";
+
         }
 
         private PropertyValue[] CrearPropiedades(MFilesDocument documento)

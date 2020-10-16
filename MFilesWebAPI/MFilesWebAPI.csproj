@@ -250,9 +250,9 @@
     <Content Include="Scripts\jquery-3.4.1.min.map" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OperacionesMFilesNF\OperacionesMFilesNF.csproj">
+    <ProjectReference Include="..\OperacionesMFilesNF\OperacionesMFiles.csproj">
       <Project>{70e351ff-be53-42e4-8f38-d6175acc287b}</Project>
-      <Name>OperacionesMFilesNF</Name>
+      <Name>OperacionesMFiles</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>

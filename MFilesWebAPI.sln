@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MFilesWebAPI", "MFilesWebAPI\MFilesWebAPI.csproj", "{2A661D27-8E86-45F0-9724-926FD6795DD4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperacionesMFilesNF", "OperacionesMFilesNF\OperacionesMFilesNF.csproj", "{70E351FF-BE53-42E4-8F38-D6175ACC287B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperacionesMFiles", "OperacionesMFilesNF\OperacionesMFiles.csproj", "{70E351FF-BE53-42E4-8F38-D6175ACC287B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
