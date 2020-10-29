@@ -1,4 +1,5 @@
 ﻿using MFaaP.MFWSClient;
+using RestSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -119,16 +120,25 @@ namespace OperacionesMFiles
 
                 if (DocumentoMfiles == null)
                     return "Error al obtener ObjVersion";
-
+            
                 var PropiedadesIndexadas = CrearPropiedades(documento);
 
+
+                var obj = client.ObjectOperations.CheckOut(DocumentoMfiles.ObjVer);
+
                 //Se actualizan las propiedades
-                var resultado = client.ObjectPropertyOperations.SetProperties(DocumentoMfiles.ObjVer, PropiedadesIndexadas, false, CancellationToken.None);
+                var resultado = client.ObjectPropertyOperations.SetProperties(obj.ObjVer, PropiedadesIndexadas, false, CancellationToken.None);
+
 
                 if (resultado == null)
+                {
+                    client.ObjectOperations.UndoCheckout(obj.ObjVer);
                     return "Error al actualizar propiedades";
+                }
 
                 var msgStr = $"Documento {resultado.ObjVer.ID} indexado exitosamente - { DateTime.Now:dd/MM/yyyy HH:mm:ss}";
+                
+                client.ObjectOperations.CheckIn(obj.ObjVer);
 
                 System.Diagnostics.Debug.WriteLine(msgStr);
                 return msgStr;
@@ -145,11 +155,73 @@ namespace OperacionesMFiles
         /// </summary>
         /// <param name="documento">Recibe objeto de la clase MFilesDocument</param>
         /// <returns>PropertyValue[] </returns>
-        private PropertyValue[] CrearPropiedades(MFilesDocument documento)
+        private PropertyValue[] CrearPropiedades(Object documento)
         {
+            System.Diagnostics.Debug.WriteLine ( documento.GetType() );
 
+            Documento newDocumento;
+            Retencion newRetencion;
+            Factura newFactura;
+
+            List<(string, string, string)> listaPropiedadesClase;
+            
+            List<PropertyValue> listaPropiedadesMFiles = new List<PropertyValue>();
+
+
+            if (documento.GetType().ToString() == "OperacionesMFiles.Documento")
+            {
+                newDocumento = (Documento)documento;
+                listaPropiedadesClase = newDocumento.GetMFilesProperties();
+            }
+            else if (documento.GetType().ToString() == "OperacionesMFiles.Retencion")
+            {
+                newRetencion = (Retencion)documento;
+                listaPropiedadesClase = newRetencion.GetMFilesProperties();
+            }
+            else if (documento.GetType().ToString() == "OperacionesMFiles.Factura")
+            {
+                newFactura = (Factura)documento;
+                listaPropiedadesClase = newFactura.GetMFilesProperties();
+            }
+            else
+                return null;
+
+            foreach (var item in listaPropiedadesClase)
+            {
+                var mFilesPropID = IdPropiedades[item.Item1];
+                var valor = item.Item2;
+                var tipo = item.Item3;
+                
+
+                if (valor == null)
+                    continue;
+
+                MFDataType mFDataType = MFDataType.Text;
+
+                if (tipo == "Text")
+                    mFDataType = MFDataType.Text;
+                else if (tipo == "Date")
+                    mFDataType = MFDataType.Date;
+                else if (tipo == "Floating")
+                {
+                    mFDataType = MFDataType.Floating;
+                    valor = valor.Replace(',', '.');
+                }
+
+
+                PropertyValue nuevaPropiedad = new PropertyValue
+                {
+                    PropertyDef = mFilesPropID,
+                    TypedValue = new TypedValue { DataType = mFDataType, Value = valor }
+                };
+
+                listaPropiedadesMFiles.Add(nuevaPropiedad);
+            }
+
+            return listaPropiedadesMFiles.ToArray();
+            
             //Se crean las propiedades (Metadatos)
-            return new[]
+            /*return new[]
                 {
                     new PropertyValue //empresa
                     {
@@ -188,7 +260,7 @@ namespace OperacionesMFiles
                     },
 
 
-                };
+                };*/
         }
 
         /// <summary>
@@ -198,7 +270,9 @@ namespace OperacionesMFiles
         /// <returns>ObjectVersion del documento encontrado</returns>
         private ObjectVersion GetDocumentObjVersion(string codigoERP)
         {
-            var condition = new TextPropertyValueSearchCondition(IdPropiedades["codigoERP"], codigoERP);
+            var condition = new TextPropertyValueSearchCondition(IdPropiedades["CodigoERP"], codigoERP);
+            var condition2 = new TextPropertyValueSearchCondition(IdPropiedades["CodigoERP"], codigoERP);
+
             var results = client.ObjectSearchOperations.SearchForObjectsByConditions(condition);
 
             // Iterate over the results and output them. results 

@@ -7,7 +7,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Configuration;
 using System.Web.Http;
-using MFilesDocument = OperacionesMFiles.MFilesDocument;
+
+
 
 namespace MFilesWebAPI.Controllers
 {
@@ -27,19 +28,22 @@ namespace MFilesWebAPI.Controllers
 
         private static readonly Dictionary<string, int> IdPropiedades = new Dictionary<string, int>
         {
-            ["codigoERP"]           = Int32.Parse(WebConfigurationManager.AppSettings["CODIGO_ERP"].ToString()),
-            ["empresa"]             = Int32.Parse(WebConfigurationManager.AppSettings["EMPRESA"].ToString()),
-            ["numDocumento"]        = Int32.Parse(WebConfigurationManager.AppSettings["NUM_DOCUMENTO"].ToString()),
-            ["numFacturaRetenida"]  = Int32.Parse(WebConfigurationManager.AppSettings["NUM_FACTURA_RETENIDA"].ToString()),
-            ["rucEmisor"]           = Int32.Parse(WebConfigurationManager.AppSettings["RUC_EMISOR"].ToString()),
-            ["fechaEmision"]        = Int32.Parse(WebConfigurationManager.AppSettings["FECHA_EMISION"].ToString()),
-            ["valor"]               = Int32.Parse(WebConfigurationManager.AppSettings["VALOR"].ToString())
+            ["CodigoERP"]           = Int32.Parse(WebConfigurationManager.AppSettings["CodigoERP"].ToString()),
+            ["Empresa"]             = Int32.Parse(WebConfigurationManager.AppSettings["Empresa"].ToString()),
+            ["Departamento"]        = Int32.Parse(WebConfigurationManager.AppSettings["Departamento"].ToString()),
+            ["NumDocumento"]        = Int32.Parse(WebConfigurationManager.AppSettings["NumDocumento"].ToString()),
+            ["NumRetencion"]        = Int32.Parse(WebConfigurationManager.AppSettings["NumRetencion"].ToString()),
+            ["NumFactura"]          = Int32.Parse(WebConfigurationManager.AppSettings["NumFactura"].ToString()),
+            ["RucEmisor"]           = Int32.Parse(WebConfigurationManager.AppSettings["RucEmisor"].ToString()),
+            ["FechaEmision"]        = Int32.Parse(WebConfigurationManager.AppSettings["FechaEmision"].ToString()),
+            ["Valor"]               = Int32.Parse(WebConfigurationManager.AppSettings["Valor"].ToString()),
+            ["Clase"]               = Int32.Parse(WebConfigurationManager.AppSettings["Clase"].ToString())
         };
 
-        private static IntegracionMFiles objConsultarDocs = new IntegracionMFiles(server, boveda, user, pass, IdPropiedades);
+        private static readonly IntegracionMFiles objConsultarDocs = new IntegracionMFiles(server, boveda, user, pass, IdPropiedades);
 
         /// <summary>
-        /// Obtiene tupla de bytes (archivo) y extensión del documento relacionado al código ERP
+        /// Obtiene tupla de bytes (archivo) y extensión del documento relacionado al Código ERP
         /// </summary>
         /// <param name="codigoERP">Código ERP</param>
         /// <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado</returns>
@@ -50,12 +54,11 @@ namespace MFilesWebAPI.Controllers
         public Tuple<byte[], string> Get(string codigoERP)
         {
             //Devuelve el objeto como respuesta
-            return objConsultarDocs.GetFile(IdPropiedades["codigoERP"], codigoERP); ;
+            return objConsultarDocs.GetFile(IdPropiedades["CodigoERP"], codigoERP); ;
         }
 
-
         /// <summary>
-        ///  Descarga el archivo relacionado al código ERP
+        ///  Descarga el archivo relacionado al Código ERP
         /// </summary>
         /// <param name="codigoERP">Código ERP</param>
         /// <returns>HttpResponseMessage con el archivo como contenido </returns>
@@ -65,7 +68,7 @@ namespace MFilesWebAPI.Controllers
         {
             
             //Descarga los archivos usando el Código ERP
-            var archivosDescargados = objConsultarDocs.GetFile(IdPropiedades["codigoERP"], codigoERP);
+            var archivosDescargados = objConsultarDocs.GetFile(IdPropiedades["CodigoERP"], codigoERP);
 
             //Obtiene el archivo en bytes y la extención
             var file = archivosDescargados.Item1;
@@ -94,76 +97,42 @@ namespace MFilesWebAPI.Controllers
         }
 
         /// <summary>
-        /// Actualiza la información del Documento en Mfiles
+        /// Actualiza la información de un Documento en M-Files que coincida con el Código ERP
         /// </summary>
         /// <param name="Documento">Objeto con la información a actualizar del documento</param>
-
+        /// <returns>Cadena con el resultado de la indexación</returns>
         [HttpPut]
-        [Route("api/MFiles/")]
-        public String Post([FromBody] MFilesDocument Documento)
+        [Route("api/MFiles/IndexarDocumento")]
+        public String Put([FromBody] Documento Documento)
         {
            //Devuelve el resultado de la indexación
             return objConsultarDocs.IndexarDocumento(Documento);
         }
 
-        /*
         /// <summary>
-        /// Descarga los archivos relacionados al parámetro Código ERP en formato ZIP
+        /// Actualiza la información de una Factura en M-Files que coincida con el Código ERP
         /// </summary>
-        /// <param name="idERP">Código ERP</param>
-        /// <returns>HttpResponseMessage con el archivo ZIP</returns>
-        [HttpGet]
-        [Route("api/MFiles/downloadZip/{id}")]
-        public HttpResponseMessage GetDocFiles(string idERP)
+        /// <param name="Documento">Objeto con la información a actualizar de la Factura</param>
+        /// <returns>Cadena con el resultado de la indexación</returns>
+        [HttpPut]
+        [Route("api/MFiles/IndexarFactura")]
+        public String Put([FromBody] Factura Documento)
         {
-            var result = new HttpResponseMessage(HttpStatusCode.OK);
-            var archivosDescargados = objConsultarDocs.GetFiles(codigoERP, idERP);
+            //Devuelve el resultado de la indexación
+            return objConsultarDocs.IndexarDocumento(Documento);
+        }
 
-
-            
-            using (var compressedFileStream = new MemoryStream())
-            {
-                //Create an archive and store the stream in memory.
-                using (var zipArchive = new ZipArchive(compressedFileStream, ZipArchiveMode.Create, false))
-                {
-                    foreach (Tuple<byte[], string> item in archivosDescargados)
-                    {
-                        //Create a zip entry for each attachment
-                        var file = item.Item1;
-                        var extension = item.Item2;
-
-                        string fileName = $@"{Guid.NewGuid()}." + extension;
-                        var zipEntry = zipArchive.CreateEntry(fileName);
-
-                        //Get the stream of the attachment
-                        using (var originalFileStream = new MemoryStream(file))
-                        using (var zipEntryStream = zipEntry.Open())
-                        {
-                            //Copy the attachment stream to the zip entry stream
-                            originalFileStream.CopyTo(zipEntryStream);
-                        }
-                    }
-                }
-
-
-                
-                string zipFileName = $@"{Guid.NewGuid()}.zip";
-
-                result.Content = new StreamContent(compressedFileStream);
-
-                var headers = result.Content.Headers;
-                headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-                headers.ContentDisposition.FileName = zipFileName;
-                headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                headers.ContentLength = compressedFileStream.Length;
-                //return new FileContentResult(compressedFileStream.ToArray(), "application/zip") { FileDownloadName = "Filename.zip" };
-            }
-
-            return result;
-
-        }*/
-
-
-
+        /// <summary>
+        /// Actualiza la información de una Retención en M-Files que coincida con el Código ERP
+        /// </summary>
+        /// <param name="Documento">Objeto con la información a actualizar de la Retención</param>
+        /// <returns>Cadena con el resultado de la indexación</returns>
+        [HttpPut]
+        [Route("api/MFiles/IndexarRetencion")]
+        public String Put([FromBody] Retencion Documento)
+        {
+            //Devuelve el resultado de la indexación
+            return objConsultarDocs.IndexarDocumento(Documento);
+        }
     }
 }
