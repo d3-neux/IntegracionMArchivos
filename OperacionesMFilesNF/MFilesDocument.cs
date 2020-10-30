@@ -19,7 +19,7 @@ namespace OperacionesMFiles
         public string Departamento { get; set; }
         public string RucEmisor{ get; set; }
         public string FechaEmision { get; set; }
-        public string Valor { get; set; }
+        
     }
 
     /// <summary>
@@ -28,7 +28,7 @@ namespace OperacionesMFiles
     public class Factura :MFilesDocument
     {
         public string NumFactura { get; set; }
-
+        public string Valor { get; set; }
         /// <summary>
         /// Genera una lista con el nombre de la propiedad, el valor y el tipo
         /// </summary>
@@ -68,8 +68,8 @@ namespace OperacionesMFiles
             lista.Add(("Departamento", Departamento, "Text"));
             lista.Add(("NumFactura", NumFactura, "Text"));
             lista.Add(("NumRetencion", NumRetencion, "Text"));
+            lista.Add(("RucEmisor", RucEmisor, "Text"));
             lista.Add(("FechaEmision", FechaEmision, "Date"));
-            lista.Add(("Valor", Valor.ToString(), "Floating"));
 
             return lista;
         }
@@ -95,7 +95,7 @@ namespace OperacionesMFiles
             lista.Add(("Departamento", Departamento, "Text"));
             lista.Add(("NumDocumento", NumDocumento, "Text"));
             lista.Add(("FechaEmision", FechaEmision, "Date"));
-            lista.Add(("Valor", Valor.ToString(), "Floating"));
+            lista.Add(("RucEmisor", RucEmisor, "Text"));
 
             return lista;
         }
