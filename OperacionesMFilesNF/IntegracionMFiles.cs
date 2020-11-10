@@ -127,19 +127,22 @@ namespace OperacionesMFiles
                 var obj = client.ObjectOperations.CheckOut(DocumentoMfiles.ObjVer);
 
                 //Se actualizan las propiedades
-                var resultado = client.ObjectPropertyOperations.SetProperties(obj.ObjVer, PropiedadesIndexadas, false, CancellationToken.None);
+                ExtendedObjectVersion resultado;
 
-
-                if (resultado == null)
+                try
+                {
+                    resultado = client.ObjectPropertyOperations.SetProperties(obj.ObjVer, PropiedadesIndexadas, false, CancellationToken.None);
+                }
+                catch(Exception ex)
                 {
                     client.ObjectOperations.UndoCheckout(obj.ObjVer);
-                    return "Error al actualizar propiedades";
+                    return $"Error al actualizar propiedades - { DateTime.Now:dd/MM/yyyy HH:mm:ss}";
                 }
+
 
                 var msgStr = $"Documento {resultado.ObjVer.ID} indexado exitosamente - { DateTime.Now:dd/MM/yyyy HH:mm:ss}";
                 
                 client.ObjectOperations.CheckIn(obj.ObjVer);
-
                 System.Diagnostics.Debug.WriteLine(msgStr);
                 return msgStr;
             }
