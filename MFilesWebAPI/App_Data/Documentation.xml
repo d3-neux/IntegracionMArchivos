@@ -522,5 +522,15 @@
             <param name="Documento">Objeto con la información a actualizar de la Retención</param>
             <returns>Cadena con el resultado de la indexación</returns>
         </member>
+        <member name="T:MFilesWebAPI.WebApiApplication">
+            <summary>
+            WebApiApplication Class
+            </summary>
+        </member>
+        <member name="M:MFilesWebAPI.WebApiApplication.Application_Start">
+            <summary>
+            Application_Start
+            </summary>
+        </member>
     </members>
 </doc>

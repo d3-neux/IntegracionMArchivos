@@ -9,8 +9,14 @@ using System.Web.Routing;
 
 namespace MFilesWebAPI
 {
+    /// <summary>
+    /// WebApiApplication Class
+    /// </summary>
     public class WebApiApplication : System.Web.HttpApplication
     {
+        /// <summary>
+        /// Application_Start
+        /// </summary>
         protected void Application_Start()
         {
             AreaRegistration.RegisterAllAreas();

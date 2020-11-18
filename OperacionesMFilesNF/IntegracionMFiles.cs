@@ -135,6 +135,7 @@ namespace OperacionesMFiles
                 }
                 catch(Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine(ex.ToString());
                     client.ObjectOperations.UndoCheckout(obj.ObjVer);
                     return $"Error al actualizar propiedades - { DateTime.Now:dd/MM/yyyy HH:mm:ss}";
                 }

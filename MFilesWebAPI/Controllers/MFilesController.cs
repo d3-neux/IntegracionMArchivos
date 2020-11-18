@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Configuration;
 using System.Web.Http;
-
+using NLog;
 
 
 namespace MFilesWebAPI.Controllers
@@ -20,7 +20,9 @@ namespace MFilesWebAPI.Controllers
     /// </summary>
     public class MFilesController : ApiController
     {
-        
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
+
         private static readonly string server    = WebConfigurationManager.AppSettings["MFILES_SERVER"].ToString();
         private static readonly string boveda    = WebConfigurationManager.AppSettings["MFILES_VAULT"].ToString();
         private static readonly string user      = WebConfigurationManager.AppSettings["MFILES_USER"].ToString();
@@ -66,7 +68,11 @@ namespace MFilesWebAPI.Controllers
         [Route("api/MFiles/downloadFile/")]
         public HttpResponseMessage GetDocFirstFile(string codigoERP)
         {
-            
+
+            logger.Info("Hell You have visited the downloadFile view" + Environment.NewLine + DateTime.Now);
+
+
+
             //Descarga los archivos usando el Código ERP
             var archivosDescargados = objConsultarDocs.GetFile(IdPropiedades["CodigoERP"], codigoERP);
 
