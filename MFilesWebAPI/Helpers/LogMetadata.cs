@@ -25,7 +25,7 @@ namespace MFilesWebAPI.Helpers
 
         public override string ToString()
         {
-            string mensaje = $"Request [ RequestContentType: {RequestContentType}, RequestUri: {RequestUri}, RequestMethod: {RequestMethod}, RequestTimestamp: {RequestTimestamp.ToString()}, "
+            string mensaje = $"RequestUri: {RequestUri}, RequestMethod: {RequestMethod}, RequestTimestamp: {RequestTimestamp}, "
                             + $"ResponseContentType: {ResponseContentType},  ResponseStatusCode: {ResponseStatusCode},  ResponseTimestamp: {ResponseTimestamp}";
 
 

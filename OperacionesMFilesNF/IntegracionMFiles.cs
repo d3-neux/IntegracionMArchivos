@@ -1,4 +1,5 @@
 ﻿using MFaaP.MFWSClient;
+using Newtonsoft.Json;
 using RestSharp.Extensions;
 using System;
 using System.Collections.Generic;
@@ -43,17 +44,19 @@ namespace OperacionesMFiles
         /// <returns>Tupla con el archivo en byte[] y string con la extension</returns>
         public Tuple<byte[], string> GetFile(int propertyID, String codigoERP)
         {
-            Tuple<byte[], string> archivosDescargados = new Tuple<byte[], string>(null, "ERROR AL OBTENER ARCHIVOS");
+
+            var errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-1", mensaje = $"Búsqueda de CodigoERP [{codigoERP}] no devolvió resultados" });
+
+            Tuple<byte[], string> archivosDescargados = new Tuple<byte[], string>(null, errorStr);
 
             try
             {
+                //Se crea la condición de búsqueda
                 var condition = new TextPropertyValueSearchCondition(propertyID, codigoERP);
-
                 var results = client.ObjectSearchOperations.SearchForObjectsByConditions(condition);
 
                 if (results.Length == 0)
                 {
-                    var errorStr = $"Búsqueda de CodigoERP [{codigoERP}] no devolvió resultados";
                     System.Diagnostics.Debug.WriteLine(errorStr);
                     return new Tuple<byte[], string>(null, errorStr);
                 }
@@ -80,7 +83,7 @@ namespace OperacionesMFiles
 
                         if(!File.Exists(fileName))
                         {
-                            var errorStr = $"ERROR EN LA DESCARGA DE ARCHIVO [{fileName}]";
+                            errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-2", mensaje = $"Error en la descarga del archivo [{fileName}]" });
                             System.Diagnostics.Debug.WriteLine(errorStr);
                             return new Tuple<byte[], string>(null, errorStr);
 
@@ -99,7 +102,11 @@ namespace OperacionesMFiles
             }
             catch (Exception ex)
             {
+                errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-3", mensaje = ex.ToString() });
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
+                return new Tuple<byte[], string>(null, errorStr);
+
+
             }
             return archivosDescargados;
         }
@@ -112,6 +119,7 @@ namespace OperacionesMFiles
         /// <returns>Respusta de indexación del documento</returns>
         public String IndexarDocumento(MFilesDocument documento)
         {
+            var errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-1", mensaje = $"Error desconocido al indexar documentos { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
             System.Diagnostics.Debug.WriteLine($"\tDocumento Actual: {documento}");
 
             try
@@ -119,8 +127,8 @@ namespace OperacionesMFiles
                 var DocumentoMfiles = GetDocumentObjVersion(documento.CodigoERP);
 
                 if (DocumentoMfiles == null)
-                    return "Error al obtener ObjVersion";
-            
+                    return JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-2", mensaje = $"Error al obtener ObjVersion { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
+
                 var PropiedadesIndexadas = CrearPropiedades(documento);
 
 
@@ -137,11 +145,11 @@ namespace OperacionesMFiles
                 {
                     System.Diagnostics.Debug.WriteLine(ex.ToString());
                     client.ObjectOperations.UndoCheckout(obj.ObjVer);
-                    return $"Error al actualizar propiedades - { DateTime.Now:dd/MM/yyyy HH:mm:ss}";
+                    return JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-3", mensaje = $"Error al actualizar propiedades { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
                 }
 
 
-                var msgStr = $"Documento {resultado.ObjVer.ID} indexado exitosamente - { DateTime.Now:dd/MM/yyyy HH:mm:ss}";
+                var msgStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-OK", mensaje = $"Documento {resultado.ObjVer.ID} indexado exitosamente - { DateTime.Now:dd/MM/yyyy HH:mm:ss}" }); 
                 
                 client.ObjectOperations.CheckIn(obj.ObjVer);
                 System.Diagnostics.Debug.WriteLine(msgStr);
@@ -150,8 +158,11 @@ namespace OperacionesMFiles
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
+
+                errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-4", mensaje = ex.ToString() });
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
             }
-            return $"Error desconocido al indexar documentos { DateTime.Now:dd/MM/yyyy HH:mm:ss}";
+            return errorStr;
         }
 
         /// <summary>
@@ -223,48 +234,6 @@ namespace OperacionesMFiles
             }
 
             return listaPropiedadesMFiles.ToArray();
-            
-            //Se crean las propiedades (Metadatos)
-            /*return new[]
-                {
-                    new PropertyValue //empresa
-                    {
-                        PropertyDef = IdPropiedades["empresa"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = documento.Empresa}
-                    },
-
-                    new PropertyValue //numDocumento
-                    {
-                        PropertyDef = IdPropiedades["numDocumento"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = documento.NumDocumento}
-                    },
-
-                    new PropertyValue //numFacturaRetenida
-                    {
-                        PropertyDef = IdPropiedades["numFacturaRetenida"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = documento.NumFacturaRetenida}
-                    },
-
-                    new PropertyValue //rucEmisor
-                    {
-                        PropertyDef = IdPropiedades["rucEmisor"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Text, Value = documento.RucEmisor}
-                    },
-
-                    new PropertyValue //fechaEmision
-                    {
-                        PropertyDef = IdPropiedades["fechaEmision"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Date, Value = documento.FechaEmision}
-                    },
-
-                    new PropertyValue //valor
-                    {
-                        PropertyDef = IdPropiedades["valor"],
-                        TypedValue = new TypedValue { DataType = MFDataType.Floating, Value = documento.Valor}
-                    },
-
-
-                };*/
         }
 
         /// <summary>
@@ -275,7 +244,7 @@ namespace OperacionesMFiles
         private ObjectVersion GetDocumentObjVersion(string codigoERP)
         {
             var condition = new TextPropertyValueSearchCondition(IdPropiedades["CodigoERP"], codigoERP);
-            var condition2 = new TextPropertyValueSearchCondition(IdPropiedades["CodigoERP"], codigoERP);
+            //var condition2 = new TextPropertyValueSearchCondition(IdPropiedades["CodigoERP"], codigoERP);
 
             var results = client.ObjectSearchOperations.SearchForObjectsByConditions(condition);
 

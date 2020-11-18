@@ -8,7 +8,7 @@ using System.Net.Http.Headers;
 using System.Web.Configuration;
 using System.Web.Http;
 using NLog;
-
+using Newtonsoft.Json;
 
 namespace MFilesWebAPI.Controllers
 {
@@ -42,7 +42,7 @@ namespace MFilesWebAPI.Controllers
             ["Clase"]               = Int32.Parse(WebConfigurationManager.AppSettings["Clase"].ToString())
         };
 
-        private static readonly IntegracionMFiles objConsultarDocs = new IntegracionMFiles(server, boveda, user, pass, IdPropiedades);
+        private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass, IdPropiedades);
 
         /// <summary>
         /// Obtiene tupla de bytes (archivo) y extensión del documento relacionado al Código ERP
@@ -56,7 +56,7 @@ namespace MFilesWebAPI.Controllers
         public Tuple<byte[], string> Get(string codigoERP)
         {
             //Devuelve el objeto como respuesta
-            return objConsultarDocs.GetFile(IdPropiedades["CodigoERP"], codigoERP); ;
+            return objIntegracionMFiles.GetFile(IdPropiedades["CodigoERP"], codigoERP); ;
         }
 
         /// <summary>
@@ -68,37 +68,41 @@ namespace MFilesWebAPI.Controllers
         [Route("api/MFiles/downloadFile/")]
         public HttpResponseMessage GetDocFirstFile(string codigoERP)
         {
-
-            logger.Info("Hell You have visited the downloadFile view" + Environment.NewLine + DateTime.Now);
-
-
-
             //Descarga los archivos usando el Código ERP
-            var archivosDescargados = objConsultarDocs.GetFile(IdPropiedades["CodigoERP"], codigoERP);
+            var archivosDescargados = objIntegracionMFiles.GetFile(IdPropiedades["CodigoERP"], codigoERP);
 
-            //Obtiene el archivo en bytes y la extención
+            //Obtiene el archivo en bytes y la extención, si es null el mensaje de error es extraído desde Item2
             var file = archivosDescargados.Item1;
             var extension = archivosDescargados.Item2;
             
-            //Genera un nombre único para el archivo
-            string fileName = $@"{Guid.NewGuid()}." + extension;
-            System.Diagnostics.Debug.WriteLine($"\tArchivo descargado: {fileName}");
-
-            //Se crea el archivo y se lo asigna al mensaje de respuesta
-
-            var fileMemStream = new MemoryStream(file);
+            HttpResponseMessage result;
             
-            var result = new HttpResponseMessage(HttpStatusCode.OK);
+            if (file == null)
+            {
+                result = new HttpResponseMessage(HttpStatusCode.NotFound);
+                result.Content = new StringContent(extension);
+            }
+            else
+            {
+                //Genera un nombre único para el archivo
+                string fileName = $@"{Guid.NewGuid()}." + extension;
+                System.Diagnostics.Debug.WriteLine($"\tArchivo descargado: {fileName}");
+
+
+                //Se crea el archivo y se lo asigna al mensaje de respuesta
+                var fileMemStream = new MemoryStream(file);
+
+                result = new HttpResponseMessage(HttpStatusCode.OK);
                 result.Content = new StreamContent(fileMemStream);
 
-            //se define el header de la respuesta
+                //se define el header de la respuesta
 
-            var headers = result.Content.Headers;
+                var headers = result.Content.Headers;
                 headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
                 headers.ContentDisposition.FileName = fileName;
                 headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 headers.ContentLength = fileMemStream.Length;
-
+            }
             return result;
         }
 
@@ -111,8 +115,9 @@ namespace MFilesWebAPI.Controllers
         [Route("api/MFiles/IndexarDocumento")]
         public String Put([FromBody] Documento Documento)
         {
-           //Devuelve el resultado de la indexación
-            return objConsultarDocs.IndexarDocumento(Documento);
+            String resultado = objIntegracionMFiles.IndexarDocumento(Documento);
+            logger.Info("IndexarDocumento: " + resultado + " -- Request BODY: " + JsonConvert.SerializeObject(Documento));
+            return resultado;
         }
 
         /// <summary>
@@ -125,7 +130,10 @@ namespace MFilesWebAPI.Controllers
         public String Put([FromBody] Factura Documento)
         {
             //Devuelve el resultado de la indexación
-            return objConsultarDocs.IndexarDocumento(Documento);
+            //Devuelve el resultado de la indexación
+            String resultado = objIntegracionMFiles.IndexarDocumento(Documento);
+            logger.Info("IndexarFactura: " + resultado + " -- Request BODY: " + JsonConvert.SerializeObject(Documento));
+            return resultado;
         }
 
         /// <summary>
@@ -138,7 +146,11 @@ namespace MFilesWebAPI.Controllers
         public String Put([FromBody] Retencion Documento)
         {
             //Devuelve el resultado de la indexación
-            return objConsultarDocs.IndexarDocumento(Documento);
+            String resultado = objIntegracionMFiles.IndexarDocumento(Documento);
+
+            logger.Info("IndexarRetencion: " + resultado + " -- Request BODY: " + JsonConvert.SerializeObject(Documento));
+
+            return resultado;
         }
     }
 }

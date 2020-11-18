@@ -43,7 +43,6 @@ namespace OperacionesMFiles
             lista.Add(("RucEmisor", RucEmisor, "Text"));
             lista.Add(("FechaEmision", FechaEmision, "Date"));
             lista.Add(("Valor", Valor.ToString(), "Floating"));
-
             return lista;
         }
     }
