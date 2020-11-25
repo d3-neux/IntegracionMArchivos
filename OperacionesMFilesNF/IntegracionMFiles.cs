@@ -127,7 +127,7 @@ namespace OperacionesMFiles
                 var DocumentoMfiles = GetDocumentObjVersion(documento.CodigoERP);
 
                 if (DocumentoMfiles == null)
-                    return JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-2", mensaje = $"Error al obtener ObjVersion { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
+                    return JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-2", mensaje = $"Documento no ha sido encontrado en M-Files { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
 
                 var PropiedadesIndexadas = CrearPropiedades(documento);
 
@@ -244,9 +244,12 @@ namespace OperacionesMFiles
         private ObjectVersion GetDocumentObjVersion(string codigoERP)
         {
             var condition = new TextPropertyValueSearchCondition(IdPropiedades["CodigoERP"], codigoERP);
-            //var condition2 = new TextPropertyValueSearchCondition(IdPropiedades["CodigoERP"], codigoERP);
 
-            var results = client.ObjectSearchOperations.SearchForObjectsByConditions(condition);
+
+            var condition2 = new LookupPropertyValueSearchCondition(IdPropiedades["Estado"],SearchConditionOperators.Equals, false, IdPropiedades["IDEstado"]);
+
+            //System.Diagnostics.Debug.WriteLine("Condicion!!!" + condition2.ToString());
+            var results = client.ObjectSearchOperations.SearchForObjectsByConditions(condition, condition2);
 
             // Iterate over the results and output them. results 
             System.Diagnostics.Debug.WriteLine($"There were {results.Length} results returned.");

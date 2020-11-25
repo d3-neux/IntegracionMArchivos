@@ -16,7 +16,6 @@ namespace OperacionesMFiles
         /// <value>Código del ERP/value>
         public string CodigoERP { get; set; } 
         public string Empresa { get; set; }
-        public string Departamento { get; set; }
         public string RucEmisor{ get; set; }
         public string FechaEmision { get; set; }
         
@@ -38,7 +37,6 @@ namespace OperacionesMFiles
             var lista = new List<(string, string, string)>();
 
             lista.Add(("Empresa", Empresa, "Text"));
-            lista.Add(("Departamento", Departamento, "Text"));
             lista.Add(("NumFactura", NumFactura, "Text"));
             lista.Add(("RucEmisor", RucEmisor, "Text"));
             lista.Add(("FechaEmision", FechaEmision, "Date"));
@@ -64,7 +62,6 @@ namespace OperacionesMFiles
             var lista = new List<(string, string, string)>();
 
             lista.Add(("Empresa", Empresa, "Text"));
-            lista.Add(("Departamento", Departamento, "Text"));
             lista.Add(("NumFactura", NumFactura, "Text"));
             lista.Add(("NumRetencion", NumRetencion, "Text"));
             lista.Add(("RucEmisor", RucEmisor, "Text"));
@@ -91,7 +88,6 @@ namespace OperacionesMFiles
             var lista = new List<(string, string, string)>();
 
             lista.Add(("Empresa", Empresa, "Text"));
-            lista.Add(("Departamento", Departamento, "Text"));
             lista.Add(("NumDocumento", NumDocumento, "Text"));
             lista.Add(("FechaEmision", FechaEmision, "Date"));
             lista.Add(("RucEmisor", RucEmisor, "Text"));

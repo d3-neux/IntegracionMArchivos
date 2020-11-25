@@ -28,18 +28,22 @@ namespace MFilesWebAPI.Controllers
         private static readonly string user      = WebConfigurationManager.AppSettings["MFILES_USER"].ToString();
         private static readonly string pass      = WebConfigurationManager.AppSettings["MFILES_PASS"].ToString();
 
+
+
         private static readonly Dictionary<string, int> IdPropiedades = new Dictionary<string, int>
         {
             ["CodigoERP"]           = Int32.Parse(WebConfigurationManager.AppSettings["CodigoERP"].ToString()),
             ["Empresa"]             = Int32.Parse(WebConfigurationManager.AppSettings["Empresa"].ToString()),
-            ["Departamento"]        = Int32.Parse(WebConfigurationManager.AppSettings["Departamento"].ToString()),
             ["NumDocumento"]        = Int32.Parse(WebConfigurationManager.AppSettings["NumDocumento"].ToString()),
             ["NumRetencion"]        = Int32.Parse(WebConfigurationManager.AppSettings["NumRetencion"].ToString()),
             ["NumFactura"]          = Int32.Parse(WebConfigurationManager.AppSettings["NumFactura"].ToString()),
             ["RucEmisor"]           = Int32.Parse(WebConfigurationManager.AppSettings["RucEmisor"].ToString()),
             ["FechaEmision"]        = Int32.Parse(WebConfigurationManager.AppSettings["FechaEmision"].ToString()),
             ["Valor"]               = Int32.Parse(WebConfigurationManager.AppSettings["Valor"].ToString()),
-            ["Clase"]               = Int32.Parse(WebConfigurationManager.AppSettings["Clase"].ToString())
+            ["Clase"]               = Int32.Parse(WebConfigurationManager.AppSettings["Clase"].ToString()),
+            
+            ["Estado"]              = Int32.Parse(WebConfigurationManager.AppSettings["Estado"].ToString()),
+            ["IDEstado"]            = Int32.Parse(WebConfigurationManager.AppSettings["IDEstado"].ToString())
         };
 
         private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass, IdPropiedades);
