@@ -41,6 +41,7 @@ namespace OperacionesMFiles
             lista.Add(("RucEmisor", RucEmisor, "Text"));
             lista.Add(("FechaEmision", FechaEmision, "Date"));
             lista.Add(("Valor", Valor.ToString(), "Floating"));
+            lista.Add(("Departamento", "Proveedores Locales", "Text"));
             return lista;
         }
     }
@@ -66,6 +67,7 @@ namespace OperacionesMFiles
             lista.Add(("NumRetencion", NumRetencion, "Text"));
             lista.Add(("RucEmisor", RucEmisor, "Text"));
             lista.Add(("FechaEmision", FechaEmision, "Date"));
+            lista.Add(("Departamento", "Proveedores Locales", "Text"));
 
             return lista;
         }
@@ -91,6 +93,7 @@ namespace OperacionesMFiles
             lista.Add(("NumDocumento", NumDocumento, "Text"));
             lista.Add(("FechaEmision", FechaEmision, "Date"));
             lista.Add(("RucEmisor", RucEmisor, "Text"));
+            lista.Add(("Departamento", "Proveedores Locales", "Text"));
 
             return lista;
         }

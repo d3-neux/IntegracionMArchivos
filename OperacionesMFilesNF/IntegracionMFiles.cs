@@ -27,7 +27,7 @@ namespace OperacionesMFiles
         public IntegracionMFiles(String server, String boveda, String user, String pass, Dictionary<string, int> IdPropiedades)
         {
             client = new MFWSClient(server);
-            
+
             client.AuthenticateUsingCredentials(
                  Guid.Parse(boveda),    //id de boveda
                      user,                  //usuario
@@ -65,7 +65,7 @@ namespace OperacionesMFiles
                 {
 
                     var folderPath = new System.IO.DirectoryInfo(Path.Combine(rutaTemp));
-                    
+
                     if (false == folderPath.Exists)
                         folderPath.Create();
 
@@ -81,7 +81,7 @@ namespace OperacionesMFiles
                             fileName,
                             objectVersion.ObjVer.Version);
 
-                        if(!File.Exists(fileName))
+                        if (!File.Exists(fileName))
                         {
                             errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-2", mensaje = $"Error en la descarga del archivo [{fileName}]" });
                             System.Diagnostics.Debug.WriteLine(errorStr);
@@ -93,7 +93,7 @@ namespace OperacionesMFiles
 
                         var archivoBytes = File.ReadAllBytes(fileName);
 
-                        archivosDescargados = Tuple.Create(archivoBytes , file.Extension);
+                        archivosDescargados = Tuple.Create(archivoBytes, file.Extension);
 
                         File.Delete(fileName);
                         System.Diagnostics.Debug.WriteLine($"\tArchivo temporal borrado {fileName}");
@@ -122,37 +122,46 @@ namespace OperacionesMFiles
             var errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-1", mensaje = $"Error desconocido al indexar documentos { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
             System.Diagnostics.Debug.WriteLine($"\tDocumento Actual: {documento}");
 
+            if (documento == null)
+            {
+                errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-5", mensaje = "Error al recibir JSON con metadatos" });
+                System.Diagnostics.Debug.WriteLine(errorStr);
+                return errorStr;
+            }
+
             try
             {
-                var DocumentoMfiles = GetDocumentObjVersion(documento.CodigoERP);
+                var DocumentoMfiles = GetDocumentObjVersion(documento.CodigoERP, documento.GetType().ToString());
 
                 if (DocumentoMfiles == null)
                     return JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-2", mensaje = $"Documento no ha sido encontrado en M-Files { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
+                else
+                    System.Diagnostics.Debug.WriteLine("DOCUMENTO ENCONTRADO: " + DocumentoMfiles.ObjVer.ID);
 
                 var PropiedadesIndexadas = CrearPropiedades(documento);
 
-
-                var obj = client.ObjectOperations.CheckOut(DocumentoMfiles.ObjVer);
+                var documentoNuevoMFiles = client.ObjectOperations.CheckOut(DocumentoMfiles.ObjVer);
 
                 //Se actualizan las propiedades
                 ExtendedObjectVersion resultado;
 
                 try
                 {
-                    resultado = client.ObjectPropertyOperations.SetProperties(obj.ObjVer, PropiedadesIndexadas, false, CancellationToken.None);
+                    resultado = client.ObjectPropertyOperations.SetProperties(documentoNuevoMFiles.ObjVer, PropiedadesIndexadas, false, CancellationToken.None);
+                    System.Diagnostics.Debug.WriteLine("PROPIEDADES ACTUALIZADAS");
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine(ex.ToString());
-                    client.ObjectOperations.UndoCheckout(obj.ObjVer);
+                    client.ObjectOperations.UndoCheckout(documentoNuevoMFiles.ObjVer);
                     return JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-3", mensaje = $"Error al actualizar propiedades { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
                 }
 
 
-                var msgStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-OK", mensaje = $"Documento {resultado.ObjVer.ID} indexado exitosamente - { DateTime.Now:dd/MM/yyyy HH:mm:ss}" }); 
-                
-                client.ObjectOperations.CheckIn(obj.ObjVer);
+                var msgStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-OK", mensaje = $"Documento {documentoNuevoMFiles.ObjVer.ID} indexado exitosamente - { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
                 System.Diagnostics.Debug.WriteLine(msgStr);
+                client.ObjectOperations.CheckIn(resultado.ObjVer);
+               
                 return msgStr;
             }
             catch (Exception ex)
@@ -172,14 +181,14 @@ namespace OperacionesMFiles
         /// <returns>PropertyValue[] </returns>
         private PropertyValue[] CrearPropiedades(Object documento)
         {
-            System.Diagnostics.Debug.WriteLine ( documento.GetType() );
+            System.Diagnostics.Debug.WriteLine(documento.GetType());
 
             Documento newDocumento;
             Retencion newRetencion;
             Factura newFactura;
 
             List<(string, string, string)> listaPropiedadesClase;
-            
+
             List<PropertyValue> listaPropiedadesMFiles = new List<PropertyValue>();
 
 
@@ -206,7 +215,7 @@ namespace OperacionesMFiles
                 var mFilesPropID = IdPropiedades[item.Item1];
                 var valor = item.Item2;
                 var tipo = item.Item3;
-                
+
 
                 if (valor == null)
                     continue;
@@ -241,15 +250,50 @@ namespace OperacionesMFiles
         /// </summary>
         /// <param name="codigoERP">Código ERP del documento</param>
         /// <returns>ObjectVersion del documento encontrado</returns>
-        private ObjectVersion GetDocumentObjVersion(string codigoERP)
+        private ObjectVersion GetDocumentObjVersion(string codigoERP, String tipoDocumento)
         {
-            var condition = new TextPropertyValueSearchCondition(IdPropiedades["CodigoERP"], codigoERP);
+            var conditionCodigoERP = new TextPropertyValueSearchCondition(IdPropiedades["CodigoERP"], codigoERP);
 
 
-            var condition2 = new LookupPropertyValueSearchCondition(IdPropiedades["Estado"],SearchConditionOperators.Equals, false, IdPropiedades["IDEstado"]);
+            ISearchCondition conditionState, conditionStateImport;
+
+            conditionStateImport = null;
+
+            //Si la factura es retención se usa la condición del estado INDEXAR RETENCIÓN
+            if (tipoDocumento == "OperacionesMFiles.Retencion")
+            {
+                System.Diagnostics.Debug.WriteLine($"{tipoDocumento}: {IdPropiedades["IDEstadoRetencion"]}");
+                conditionState = new LookupPropertyValueSearchCondition(IdPropiedades["Estado"], SearchConditionOperators.Equals, false, IdPropiedades["IDEstadoRetencion"]);
+                
+            }
+            //para nota de crédito
+            else if (tipoDocumento  == "OperacionesMFiles.Documento")
+            {
+                System.Diagnostics.Debug.WriteLine($"{tipoDocumento}: {IdPropiedades["IDEstadoNota"]}");
+                conditionState = new LookupPropertyValueSearchCondition(IdPropiedades["Estado"], SearchConditionOperators.Equals, false, IdPropiedades["IDEstadoNota"]);
+
+            }
+            //para factura e importaciones
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"{tipoDocumento}: {IdPropiedades["IDEstado"]}");
+                conditionState = new LookupPropertyValueSearchCondition(IdPropiedades["Estado"], SearchConditionOperators.Equals, false, IdPropiedades["IDEstado"]);
+
+                //Condición solamente para Facturas Importaciones
+                System.Diagnostics.Debug.WriteLine($"{tipoDocumento}: {IdPropiedades["IDEstadoImport"]}");
+                conditionStateImport = new LookupPropertyValueSearchCondition(IdPropiedades["Estado"], SearchConditionOperators.Equals, false, IdPropiedades["IDEstadoImport"]);
+            }
+
 
             //System.Diagnostics.Debug.WriteLine("Condicion!!!" + condition2.ToString());
-            var results = client.ObjectSearchOperations.SearchForObjectsByConditions(condition, condition2);
+            var results = client.ObjectSearchOperations.SearchForObjectsByConditions(conditionCodigoERP, conditionState);
+
+
+            if (results.Length == 0 && tipoDocumento == "OperacionesMFiles.Factura") 
+            {
+                System.Diagnostics.Debug.WriteLine($"Verificando factura de importación .");
+                results = client.ObjectSearchOperations.SearchForObjectsByConditions(conditionCodigoERP, conditionStateImport);
+            }
 
             // Iterate over the results and output them. results 
             System.Diagnostics.Debug.WriteLine($"There were {results.Length} results returned.");

@@ -34,6 +34,7 @@ namespace MFilesWebAPI.Controllers
         {
             ["CodigoERP"]           = Int32.Parse(WebConfigurationManager.AppSettings["CodigoERP"].ToString()),
             ["Empresa"]             = Int32.Parse(WebConfigurationManager.AppSettings["Empresa"].ToString()),
+            ["Departamento"]        = Int32.Parse(WebConfigurationManager.AppSettings["Departamento"].ToString()),
             ["NumDocumento"]        = Int32.Parse(WebConfigurationManager.AppSettings["NumDocumento"].ToString()),
             ["NumRetencion"]        = Int32.Parse(WebConfigurationManager.AppSettings["NumRetencion"].ToString()),
             ["NumFactura"]          = Int32.Parse(WebConfigurationManager.AppSettings["NumFactura"].ToString()),
@@ -43,7 +44,10 @@ namespace MFilesWebAPI.Controllers
             ["Clase"]               = Int32.Parse(WebConfigurationManager.AppSettings["Clase"].ToString()),
             
             ["Estado"]              = Int32.Parse(WebConfigurationManager.AppSettings["Estado"].ToString()),
-            ["IDEstado"]            = Int32.Parse(WebConfigurationManager.AppSettings["IDEstado"].ToString())
+            ["IDEstado"]            = Int32.Parse(WebConfigurationManager.AppSettings["IDEstado"].ToString()),
+            ["IDEstadoRetencion"]   = Int32.Parse(WebConfigurationManager.AppSettings["IDEstadoRetencion"].ToString()),
+            ["IDEstadoNota"]        = Int32.Parse(WebConfigurationManager.AppSettings["IDEstadoNota"].ToString()),
+            ["IDEstadoImport"]      = Int32.Parse(WebConfigurationManager.AppSettings["IDEstadoImport"].ToString())
         };
 
         private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass, IdPropiedades);
