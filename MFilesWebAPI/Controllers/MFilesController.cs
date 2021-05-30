@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Configuration;
 using System.Web.Http;
@@ -29,55 +30,61 @@ namespace MFilesWebAPI.Controllers
         private static readonly string pass      = WebConfigurationManager.AppSettings["MFILES_PASS"].ToString();
 
 
-
-        private static readonly Dictionary<string, int> IdPropiedades = new Dictionary<string, int>
-        {
-            ["CodigoERP"]           = Int32.Parse(WebConfigurationManager.AppSettings["CodigoERP"].ToString()),
-            ["Empresa"]             = Int32.Parse(WebConfigurationManager.AppSettings["Empresa"].ToString()),
-            ["Departamento"]        = Int32.Parse(WebConfigurationManager.AppSettings["Departamento"].ToString()),
-            ["NumDocumento"]        = Int32.Parse(WebConfigurationManager.AppSettings["NumDocumento"].ToString()),
-            ["NumRetencion"]        = Int32.Parse(WebConfigurationManager.AppSettings["NumRetencion"].ToString()),
-            ["NumFactura"]          = Int32.Parse(WebConfigurationManager.AppSettings["NumFactura"].ToString()),
-            ["RucEmisor"]           = Int32.Parse(WebConfigurationManager.AppSettings["RucEmisor"].ToString()),
-            ["FechaEmision"]        = Int32.Parse(WebConfigurationManager.AppSettings["FechaEmision"].ToString()),
-            ["Valor"]               = Int32.Parse(WebConfigurationManager.AppSettings["Valor"].ToString()),
-            ["Clase"]               = Int32.Parse(WebConfigurationManager.AppSettings["Clase"].ToString()),
-            
-            ["Estado"]              = Int32.Parse(WebConfigurationManager.AppSettings["Estado"].ToString()),
-            ["IDEstado"]            = Int32.Parse(WebConfigurationManager.AppSettings["IDEstado"].ToString()),
-            ["IDEstadoRetencion"]   = Int32.Parse(WebConfigurationManager.AppSettings["IDEstadoRetencion"].ToString()),
-            ["IDEstadoNota"]        = Int32.Parse(WebConfigurationManager.AppSettings["IDEstadoNota"].ToString()),
-            ["IDEstadoImport"]      = Int32.Parse(WebConfigurationManager.AppSettings["IDEstadoImport"].ToString())
-        };
-
-        private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass, IdPropiedades);
+        private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass);
 
         /// <summary>
         /// Obtiene tupla de bytes (archivo) y extensión del documento relacionado al Código ERP
         /// </summary>
-        /// <param name="codigoERP">Código ERP</param>
+        /// <param name="documento">Código ERP</param>
         /// <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado</returns>
-        
+
         // API/MFiles/{ID}
         [HttpGet]
         [Route("api/MFiles/")]
-        public Tuple<byte[], string> Get(string codigoERP)
+        public Tuple<byte[], string> Get(MFilesSearchDocument documento)
+        {
+            System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
+
+            return objIntegracionMFiles.GetFile(documento); ;
+        }
+
+
+        [HttpGet]
+        [Route("api/MFiles/GetFilesAndMetadata/")]
+        public List<MFilesDocument> GetFilesAndMetadata(MFilesSearchDocument documento)
+        {
+            System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
+
+            return objIntegracionMFiles.GetFilesAndMetadata(documento, true); ;
+        }
+
+
+        [HttpGet]
+        [Route("api/MFiles/GetOnlyMetadata/")]
+        
+        public List<MFilesDocument> GetOnlyMetadata(MFilesSearchDocument documento)
         {
             //Devuelve el objeto como respuesta
-            return objIntegracionMFiles.GetFile(IdPropiedades["CodigoERP"], codigoERP); ;
+            System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
+
+            return objIntegracionMFiles.GetFilesAndMetadata(documento, false); ;
         }
 
         /// <summary>
         ///  Descarga el archivo relacionado al Código ERP
         /// </summary>
-        /// <param name="codigoERP">Código ERP</param>
+        /// <param name="documento">Código ERP</param>
         /// <returns>HttpResponseMessage con el archivo como contenido </returns>
         [HttpGet]
-        [Route("api/MFiles/downloadFile/")]
-        public HttpResponseMessage GetDocFirstFile(string codigoERP)
+        [Route("api/MFiles/DownloadFile/")]
+        public HttpResponseMessage GetDocFirstFile(MFilesSearchDocument documento)
         {
+            System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
+            //MFilesSearchDocument documento = JsonConvert.DeserializeObject<MFilesSearchDocument>(documentoJSON);
+
+            
             //Descarga los archivos usando el Código ERP
-            var archivosDescargados = objIntegracionMFiles.GetFile(IdPropiedades["CodigoERP"], codigoERP);
+            var archivosDescargados = objIntegracionMFiles.GetFile(documento);
 
             //Obtiene el archivo en bytes y la extención, si es null el mensaje de error es extraído desde Item2
             var file = archivosDescargados.Item1;
@@ -119,46 +126,15 @@ namespace MFilesWebAPI.Controllers
         /// </summary>
         /// <param name="Documento">Objeto con la información a actualizar del documento</param>
         /// <returns>Cadena con el resultado de la indexación</returns>
-        [HttpPut]
+        /*[HttpPut]
         [Route("api/MFiles/IndexarDocumento")]
-        public String Put([FromBody] Documento Documento)
+        public String Put([FromBody] MFilesSearchDocument Documento)
         {
             String resultado = objIntegracionMFiles.IndexarDocumento(Documento);
             logger.Info("IndexarDocumento: " + resultado + " -- Request BODY: " + JsonConvert.SerializeObject(Documento));
             return resultado;
-        }
+        }*/
 
-        /// <summary>
-        /// Actualiza la información de una Factura en M-Files que coincida con el Código ERP
-        /// </summary>
-        /// <param name="Documento">Objeto con la información a actualizar de la Factura</param>
-        /// <returns>Cadena con el resultado de la indexación</returns>
-        [HttpPut]
-        [Route("api/MFiles/IndexarFactura")]
-        public String Put([FromBody] Factura Documento)
-        {
-            //Devuelve el resultado de la indexación
-            //Devuelve el resultado de la indexación
-            String resultado = objIntegracionMFiles.IndexarDocumento(Documento);
-            logger.Info("IndexarFactura: " + resultado + " -- Request BODY: " + JsonConvert.SerializeObject(Documento));
-            return resultado;
-        }
-
-        /// <summary>
-        /// Actualiza la información de una Retención en M-Files que coincida con el Código ERP
-        /// </summary>
-        /// <param name="Documento">Objeto con la información a actualizar de la Retención</param>
-        /// <returns>Cadena con el resultado de la indexación</returns>
-        [HttpPut]
-        [Route("api/MFiles/IndexarRetencion")]
-        public String Put([FromBody] Retencion Documento)
-        {
-            //Devuelve el resultado de la indexación
-            String resultado = objIntegracionMFiles.IndexarDocumento(Documento);
-
-            logger.Info("IndexarRetencion: " + resultado + " -- Request BODY: " + JsonConvert.SerializeObject(Documento));
-
-            return resultado;
-        }
+        
     }
 }

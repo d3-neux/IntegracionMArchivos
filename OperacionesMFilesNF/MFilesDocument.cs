@@ -4,98 +4,101 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Web;
+using MFaaP.MFWSClient;
+using Newtonsoft.Json;
 
 namespace OperacionesMFiles
 {
-    /// <summary>
-    /// Clase base representando con los campos generales de cada tipo
-    /// </summary>
     
+
+    //Root myDeserializedClass = JsonConvert.DeserializeObject<MFilesSearchDocument>(myJsonResponse); 
+    public class DocumentProperty
+    {
+        public int Id { get; set; }
+        public string Value { get; set; }
+        public string Name{ get; set; }
+
+        public DocumentProperty(int id, string value, string name)
+        {
+            Id = id;
+            Value = value;
+            Name = name;
+        }
+
+        public override string ToString()
+        {
+            return $"ID: {Id}, Value: {Value}, Name: {Name}";
+        }
+    }
+
+
+    //esta clase representa un documento de m-files con sus propiedades > 1000 y todos los archivos del objecto
     public class MFilesDocument
     {
-        /// <value>Código del ERP/value>
-        public string CodigoERP { get; set; } 
-        public string Empresa { get; set; }
-        public string RucEmisor{ get; set; }
-        public string FechaEmision { get; set; }
-        
-    }
+        public List<DocumentProperty> DocProperties{ get; set; }
 
-    /// <summary>
-    /// Representa una Factura
-    /// </summary>
-    public class Factura :MFilesDocument
-    {
-        public string NumFactura { get; set; }
-        public string Valor { get; set; }
-        /// <summary>
-        /// Genera una lista con el nombre de la propiedad, el valor y el tipo
-        /// </summary>
-        /// <returns>Lista con tupla de 3 items</returns>
-        public List<(string,string,string)> GetMFilesProperties()
+        [JsonProperty("Files", NullValueHandling = NullValueHandling.Ignore)]
+        public List<byte[]> Files { get; set; }
+
+        public MFilesDocument(List<DocumentProperty> DocProperties, List<byte[]> Files)
         {
-            var lista = new List<(string, string, string)>();
-
-            lista.Add(("Empresa", Empresa, "Text"));
-            lista.Add(("NumFactura", NumFactura, "Text"));
-            lista.Add(("RucEmisor", RucEmisor, "Text"));
-            lista.Add(("FechaEmision", FechaEmision, "Date"));
-            lista.Add(("Valor", Valor.ToString(), "Floating"));
-            lista.Add(("Departamento", "Proveedores Locales", "Text"));
-            return lista;
+            this.DocProperties = DocProperties;
+            this.Files = Files;
         }
-    }
 
-    /// <summary>
-    /// Representa una retencion
-    /// </summary>
-    public class Retencion : MFilesDocument
-    {
-        public string NumFactura { get; set; }
-        public string NumRetencion { get; set; }
-
-        /// <summary>
-        /// Genera una lista con el nombre de la propiedad, el valor y el tipo
-        /// </summary>
-        /// <returns>Lista con tupla de 3 items</returns>
-        public List<(string, string, string)> GetMFilesProperties()
+        public MFilesDocument(string errMsg)
         {
-            var lista = new List<(string, string, string)>();
-
-            lista.Add(("Empresa", Empresa, "Text"));
-            lista.Add(("NumFactura", NumFactura, "Text"));
-            lista.Add(("NumRetencion", NumRetencion, "Text"));
-            lista.Add(("RucEmisor", RucEmisor, "Text"));
-            lista.Add(("FechaEmision", FechaEmision, "Date"));
-            lista.Add(("Departamento", "Proveedores Locales", "Text"));
-
-            return lista;
+            List<DocumentProperty> DocProperties = new List<DocumentProperty>();
+            DocProperties.Add(new DocumentProperty(0, errMsg, ""));
+            this.DocProperties = DocProperties;
         }
-    }
 
-
-    /// <summary>
-    /// Representa otro tipo de documento
-    /// </summary>
-    public class Documento : MFilesDocument
-    {
-        public string NumDocumento { get; set; }
-
-        /// <summary>
-        /// Genera una lista con el nombre de la propiedad, el valor y el tipo
-        /// </summary>
-        /// <returns>Lista con tupla de 3 items</returns>
-        public List<(string, string, string)> GetMFilesProperties()
+        public override string ToString()
         {
-            var lista = new List<(string, string, string)>();
-
-            lista.Add(("Empresa", Empresa, "Text"));
-            lista.Add(("NumDocumento", NumDocumento, "Text"));
-            lista.Add(("FechaEmision", FechaEmision, "Date"));
-            lista.Add(("RucEmisor", RucEmisor, "Text"));
-            lista.Add(("Departamento", "Proveedores Locales", "Text"));
-
-            return lista;
+            return $"Properties: {string.Join(",", DocProperties)}";
         }
     }
 }
+
+
+/*
+    id: "1147", // numero de documento
+    id: "1002", // fecha de documento
+    id: "1148", // ruc
+    id: "1149", // total
+    id: "39", 	// estado 
+
+     
+    {
+	class: "2",
+	properties: [
+		{
+			id: "1147",
+			value: "",
+			type: "text",
+			condition: "equal"
+		},
+		{
+			id: "1002", 
+			value: "",
+			type: "date",
+			condition: "equal"
+		},
+		{
+			id: "1148",
+			value: "",
+			type: "text",
+			condition: "equal"
+		},
+		{
+			id: "1149",
+			value: "12.25",
+			type: "floating",
+			condition: "equal"
+		}
+	]
+}
+
+
+
+     */

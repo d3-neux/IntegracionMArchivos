@@ -1,0 +1,64 @@
+{
+	DocProperties: [
+		{
+			Id: "1147",
+			Value: "001-001-0000123",
+			Type: "text",
+			Condition: "Equals"
+		},
+		{
+			Id: "1002", 
+			Value: "",
+			Type: "date",
+			Condition: "Equals"
+		},
+		{
+			Id: "1148",
+			Value: "",
+			Type: "text",
+			Condition: "Equals"
+		},
+		{
+			Id: "1149",
+			Value: "12.25",
+			Type: "floating",
+			Condition: "Equals"
+		}
+	]
+}
+
+id: "1147", // numero de documento
+id: "1002", // fecha de documento
+id: "1148", // ruc
+id: "1149", // total
+id: "39", 	// estado 
+
+
+{
+	"DocProperties": [
+      {
+			"Id": "100",
+			"Value": "2",
+			"Type": "lookup",
+			"Condition": "Equals"
+		},
+		{
+			"Id": "1147",
+			"Value": "001-001-0000123",
+			"Type": "Text",
+			"Condition": "Equals"
+		}
+	]
+}
+
+
+{
+	"DocProperties": [
+      {
+			"Id": "1147",
+			"Value": "2",
+			"Type": "Text",
+			"Condition": "Equals"
+		}
+	]
+}

@@ -1,4 +1,7 @@
 Create database WebApiLog;
+go
+use WebApiLog;
+go
 
 CREATE TABLE [dbo].[exceptionlog]   
   (   

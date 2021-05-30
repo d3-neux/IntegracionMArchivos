@@ -487,40 +487,19 @@
             
             </summary>
         </member>
-        <member name="M:MFilesWebAPI.Controllers.MFilesController.Get(System.String)">
+        <member name="M:MFilesWebAPI.Controllers.MFilesController.Get(OperacionesMFiles.MFilesSearchDocument)">
             <summary>
             Obtiene tupla de bytes (archivo) y extensión del documento relacionado al Código ERP
             </summary>
-            <param name="codigoERP">Código ERP</param>
+            <param name="documento">Código ERP</param>
             <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado</returns>
         </member>
-        <member name="M:MFilesWebAPI.Controllers.MFilesController.GetDocFirstFile(System.String)">
+        <member name="M:MFilesWebAPI.Controllers.MFilesController.GetDocFirstFile(OperacionesMFiles.MFilesSearchDocument)">
             <summary>
              Descarga el archivo relacionado al Código ERP
             </summary>
-            <param name="codigoERP">Código ERP</param>
+            <param name="documento">Código ERP</param>
             <returns>HttpResponseMessage con el archivo como contenido </returns>
-        </member>
-        <member name="M:MFilesWebAPI.Controllers.MFilesController.Put(OperacionesMFiles.Documento)">
-            <summary>
-            Actualiza la información de un Documento en M-Files que coincida con el Código ERP
-            </summary>
-            <param name="Documento">Objeto con la información a actualizar del documento</param>
-            <returns>Cadena con el resultado de la indexación</returns>
-        </member>
-        <member name="M:MFilesWebAPI.Controllers.MFilesController.Put(OperacionesMFiles.Factura)">
-            <summary>
-            Actualiza la información de una Factura en M-Files que coincida con el Código ERP
-            </summary>
-            <param name="Documento">Objeto con la información a actualizar de la Factura</param>
-            <returns>Cadena con el resultado de la indexación</returns>
-        </member>
-        <member name="M:MFilesWebAPI.Controllers.MFilesController.Put(OperacionesMFiles.Retencion)">
-            <summary>
-            Actualiza la información de una Retención en M-Files que coincida con el Código ERP
-            </summary>
-            <param name="Documento">Objeto con la información a actualizar de la Retención</param>
-            <returns>Cadena con el resultado de la indexación</returns>
         </member>
         <member name="T:MFilesWebAPI.WebApiApplication">
             <summary>

@@ -1,20 +1,22 @@
 ﻿using MFaaP.MFWSClient;
 using Newtonsoft.Json;
-using RestSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading;
+using System.Text;
+
 
 namespace OperacionesMFiles
 {
     public class IntegracionMFiles
     {
-        private static MFWSClient client;
+        public static MFWSClient client;
+        public static MFWSVaultPropertyDefOperations mfPropertyOperator;
+
+
 
         public static string rutaTemp = Path.Combine(Path.GetTempPath(), "MFilesAPIData");
-        private static Dictionary<string, int> IdPropiedades;
+
 
         /// <summary>
         /// Inicializa el cliente de MFiles y recibe la lista de propiedades;
@@ -23,18 +25,61 @@ namespace OperacionesMFiles
         /// <param name="boveda">GUID de la bóveda de Motransa</param>
         /// <param name="user">Usuario</param>
         /// <param name="pass">Contraseña</param>
-        /// <param name="IdPropiedades">Diccionario con nombres y id de propiedades</param>
-        public IntegracionMFiles(String server, String boveda, String user, String pass, Dictionary<string, int> IdPropiedades)
+        public IntegracionMFiles(String server, String boveda, String user, String pass)
         {
             client = new MFWSClient(server);
 
             client.AuthenticateUsingCredentials(
-                 Guid.Parse(boveda),    //id de boveda
-                     user,                  //usuario
-                     pass);
+                Guid.Parse(boveda),    //id de boveda
+                user,                  //usuario
+                pass);
 
-            IntegracionMFiles.IdPropiedades = IdPropiedades;
+            mfPropertyOperator = new MFWSVaultPropertyDefOperations(client);
+
+
         }
+
+
+        public List<MFilesDocument> GetFilesAndMetadata(MFilesSearchDocument searchDocument, Boolean includeFiles)
+        {
+            List<MFilesDocument> mfilesDocuments = new List<MFilesDocument>();
+
+            //try
+            {
+                //Se crea la condición de búsqueda
+                var results = client.ObjectSearchOperations.SearchForObjectsByConditions(searchDocument.GetMFDocConditions().ToArray());
+
+                if (results.Length == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("Busqueda no devolvió resultados");
+
+                    mfilesDocuments.Add( (new MFilesDocument("Busqueda no devolvió resultados") ) ) ;
+
+                    return mfilesDocuments;
+                }
+
+                
+                //Si hay resultados
+                foreach (var objectVersion in results)
+                {
+                    var files = includeFiles ? GetDocumentFiles(objectVersion) : null;
+                    MFilesDocument mfilesDocument = new MFilesDocument(GetDocumentProperties(objectVersion), files);
+                    mfilesDocuments.Add(mfilesDocument);
+                }
+            }
+            /*catch (Exception ex)
+            {
+                errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-3", mensaje = ex.ToString() });
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                return new Tuple<byte[], string>(null, errorStr);
+
+
+            }*/
+            return mfilesDocuments;
+        }
+
+        
+
 
         /// <summary>
         /// Devuelve una tupla del archivo en bytes y su extensión
@@ -42,18 +87,17 @@ namespace OperacionesMFiles
         /// <param name="codigoERP">Código ERP del documento consultado</param>
         /// <param name="propertyID">ID de la propiedad de M-Files</param>
         /// <returns>Tupla con el archivo en byte[] y string con la extension</returns>
-        public Tuple<byte[], string> GetFile(int propertyID, String codigoERP)
+        public Tuple<byte[], string> GetFile(MFilesSearchDocument document)
         {
 
-            var errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-1", mensaje = $"Búsqueda de CodigoERP [{codigoERP}] no devolvió resultados" });
+            var errorStr = JsonConvert.SerializeObject(new { origen = this.GetType().FullName + "." + System.Reflection.MethodBase.GetCurrentMethod().Name + " - 1 "
+                , mensaje = $"Búsqueda [{document.ToString()}] no devolvió resultados" });
 
             Tuple<byte[], string> archivosDescargados = new Tuple<byte[], string>(null, errorStr);
-
-            try
+            //try
             {
                 //Se crea la condición de búsqueda
-                var condition = new TextPropertyValueSearchCondition(propertyID, codigoERP);
-                var results = client.ObjectSearchOperations.SearchForObjectsByConditions(condition);
+                var results = client.ObjectSearchOperations.SearchForObjectsByConditions(document.GetMFDocConditions().ToArray());
 
                 if (results.Length == 0)
                 {
@@ -61,13 +105,15 @@ namespace OperacionesMFiles
                     return new Tuple<byte[], string>(null, errorStr);
                 }
 
+                //Si hay resultados
                 foreach (var objectVersion in results)
                 {
-
                     var folderPath = new System.IO.DirectoryInfo(Path.Combine(rutaTemp));
 
                     if (false == folderPath.Exists)
                         folderPath.Create();
+
+                    GetDocumentProperties(objectVersion);
 
                     foreach (var file in objectVersion.Files)
                     {
@@ -100,14 +146,14 @@ namespace OperacionesMFiles
                     }
                 }
             }
-            catch (Exception ex)
+            /*catch (Exception ex)
             {
                 errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-3", mensaje = ex.ToString() });
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
                 return new Tuple<byte[], string>(null, errorStr);
 
 
-            }
+            }*/
             return archivosDescargados;
         }
 
@@ -117,7 +163,7 @@ namespace OperacionesMFiles
         /// </summary>
         /// <param name="documento">Objeto de la clase MFIlesDocument</param>
         /// <returns>Respusta de indexación del documento</returns>
-        public String IndexarDocumento(MFilesDocument documento)
+        /*public String IndexarDocumento(MFilesSearchDocument documento)
         {
             var errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-1", mensaje = $"Error desconocido al indexar documentos { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
             System.Diagnostics.Debug.WriteLine($"\tDocumento Actual: {documento}");
@@ -139,7 +185,6 @@ namespace OperacionesMFiles
                     System.Diagnostics.Debug.WriteLine("DOCUMENTO ENCONTRADO: " + DocumentoMfiles.ObjVer.ID);
 
                 var PropiedadesIndexadas = CrearPropiedades(documento);
-
                 var documentoNuevoMFiles = client.ObjectOperations.CheckOut(DocumentoMfiles.ObjVer);
 
                 //Se actualizan las propiedades
@@ -173,127 +218,23 @@ namespace OperacionesMFiles
             }
             return errorStr;
         }
-
+        */
         /// <summary>
         /// Crea array de propiedades del documento a actualizar
         /// </summary>
         /// <param name="documento">Recibe objeto de la clase MFilesDocument</param>
         /// <returns>PropertyValue[] </returns>
-        private PropertyValue[] CrearPropiedades(Object documento)
-        {
-            System.Diagnostics.Debug.WriteLine(documento.GetType());
-
-            Documento newDocumento;
-            Retencion newRetencion;
-            Factura newFactura;
-
-            List<(string, string, string)> listaPropiedadesClase;
-
-            List<PropertyValue> listaPropiedadesMFiles = new List<PropertyValue>();
-
-
-            if (documento.GetType().ToString() == "OperacionesMFiles.Documento")
-            {
-                newDocumento = (Documento)documento;
-                listaPropiedadesClase = newDocumento.GetMFilesProperties();
-            }
-            else if (documento.GetType().ToString() == "OperacionesMFiles.Retencion")
-            {
-                newRetencion = (Retencion)documento;
-                listaPropiedadesClase = newRetencion.GetMFilesProperties();
-            }
-            else if (documento.GetType().ToString() == "OperacionesMFiles.Factura")
-            {
-                newFactura = (Factura)documento;
-                listaPropiedadesClase = newFactura.GetMFilesProperties();
-            }
-            else
-                return null;
-
-            foreach (var item in listaPropiedadesClase)
-            {
-                var mFilesPropID = IdPropiedades[item.Item1];
-                var valor = item.Item2;
-                var tipo = item.Item3;
-
-
-                if (valor == null)
-                    continue;
-
-                MFDataType mFDataType = MFDataType.Text;
-
-                if (tipo == "Text")
-                    mFDataType = MFDataType.Text;
-                else if (tipo == "Date")
-                    mFDataType = MFDataType.Date;
-                else if (tipo == "Floating")
-                {
-                    mFDataType = MFDataType.Floating;
-                    valor = valor.Replace(',', '.');
-                }
-
-
-                PropertyValue nuevaPropiedad = new PropertyValue
-                {
-                    PropertyDef = mFilesPropID,
-                    TypedValue = new TypedValue { DataType = mFDataType, Value = valor }
-                };
-
-                listaPropiedadesMFiles.Add(nuevaPropiedad);
-            }
-
-            return listaPropiedadesMFiles.ToArray();
-        }
+        
 
         /// <summary>
         /// Obtiene un objVersion que coindica con el parámetro de búsqueda
         /// </summary>
         /// <param name="codigoERP">Código ERP del documento</param>
         /// <returns>ObjectVersion del documento encontrado</returns>
-        private ObjectVersion GetDocumentObjVersion(string codigoERP, String tipoDocumento)
+        private ObjectVersion GetDocumentObjVersion(MFilesSearchDocument documento)
         {
-            var conditionCodigoERP = new TextPropertyValueSearchCondition(IdPropiedades["CodigoERP"], codigoERP);
-
-
-            ISearchCondition conditionState, conditionStateImport;
-
-            conditionStateImport = null;
-
-            //Si la factura es retención se usa la condición del estado INDEXAR RETENCIÓN
-            if (tipoDocumento == "OperacionesMFiles.Retencion")
-            {
-                System.Diagnostics.Debug.WriteLine($"{tipoDocumento}: {IdPropiedades["IDEstadoRetencion"]}");
-                conditionState = new LookupPropertyValueSearchCondition(IdPropiedades["Estado"], SearchConditionOperators.Equals, false, IdPropiedades["IDEstadoRetencion"]);
-                
-            }
-            //para nota de crédito
-            else if (tipoDocumento  == "OperacionesMFiles.Documento")
-            {
-                System.Diagnostics.Debug.WriteLine($"{tipoDocumento}: {IdPropiedades["IDEstadoNota"]}");
-                conditionState = new LookupPropertyValueSearchCondition(IdPropiedades["Estado"], SearchConditionOperators.Equals, false, IdPropiedades["IDEstadoNota"]);
-
-            }
-            //para factura e importaciones
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"{tipoDocumento}: {IdPropiedades["IDEstado"]}");
-                conditionState = new LookupPropertyValueSearchCondition(IdPropiedades["Estado"], SearchConditionOperators.Equals, false, IdPropiedades["IDEstado"]);
-
-                //Condición solamente para Facturas Importaciones
-                System.Diagnostics.Debug.WriteLine($"{tipoDocumento}: {IdPropiedades["IDEstadoImport"]}");
-                conditionStateImport = new LookupPropertyValueSearchCondition(IdPropiedades["Estado"], SearchConditionOperators.Equals, false, IdPropiedades["IDEstadoImport"]);
-            }
-
-
             //System.Diagnostics.Debug.WriteLine("Condicion!!!" + condition2.ToString());
-            var results = client.ObjectSearchOperations.SearchForObjectsByConditions(conditionCodigoERP, conditionState);
-
-
-            if (results.Length == 0 && tipoDocumento == "OperacionesMFiles.Factura") 
-            {
-                System.Diagnostics.Debug.WriteLine($"Verificando factura de importación .");
-                results = client.ObjectSearchOperations.SearchForObjectsByConditions(conditionCodigoERP, conditionStateImport);
-            }
+            var results = client.ObjectSearchOperations.SearchForObjectsByConditions(documento.GetMFDocConditions().ToArray());
 
             // Iterate over the results and output them. results 
             System.Diagnostics.Debug.WriteLine($"There were {results.Length} results returned.");
@@ -302,8 +243,78 @@ namespace OperacionesMFiles
             {
                 return objectVersion;
             }
-
             return null;
+        }
+
+        //Get object properties from object version
+        private List<DocumentProperty> GetDocumentProperties(ObjectVersion objectVersion)
+        {
+            var properties = client.ObjectPropertyOperations.GetProperties(objectVersion.ObjVer);
+
+            List<DocumentProperty> DocumentProperties = new List<DocumentProperty>();
+
+            foreach (var property in properties)
+            {
+
+                if (property.PropertyDef > 999)
+                {
+                    var propertyName = client.PropertyDefOperations.GetPropertyDef(property.PropertyDef).Name;
+                    var propertyID = property.PropertyDef;
+                    var propertyValue = property.TypedValue.Value != null ? property.TypedValue.Value.ToString() : "";
+
+                    var newProperty = new DocumentProperty(propertyID, propertyValue, propertyName);
+
+                    DocumentProperties.Add(newProperty);
+                    System.Diagnostics.Debug.WriteLine($"{ newProperty }");
+                }
+            }
+
+            return DocumentProperties;
+        }
+
+        //Obtiene object version y devuelve lista de byte[] por cada archivo relacionado
+        public List<byte[]> GetDocumentFiles(ObjectVersion objectVersion)
+        {
+            List<byte[]> base64Files = new List<byte[]>();
+
+
+            var folderPath = new System.IO.DirectoryInfo(Path.Combine(rutaTemp));
+
+            if (false == folderPath.Exists)
+                folderPath.Create();
+
+            foreach (var file in objectVersion.Files)
+            {
+                // Generate a unique file name.
+                var fileName = System.IO.Path.Combine(folderPath.FullName, file.ID + "." + file.Extension);
+
+                // Download the file data.
+                client.ObjectFileOperations.DownloadFile(objectVersion.ObjVer.Type,
+                    objectVersion.ObjVer.ID,
+                    objectVersion.Files[0].ID,
+                    fileName,
+                    objectVersion.ObjVer.Version);
+
+                if (!File.Exists(fileName))
+                {
+                    var errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-2", mensaje = $"Error en la descarga del archivo [{fileName}]", ID = $"{objectVersion.ObjVer.ID}" });
+                    base64Files.Add(Encoding.Unicode.GetBytes(errorStr));
+                    continue;
+
+                }
+
+                System.Diagnostics.Debug.WriteLine($"\tArchivo temporal descargado {fileName}");
+
+                var archivoBytes = File.ReadAllBytes(fileName);
+
+                base64Files.Add(archivoBytes);
+
+                File.Delete(fileName);
+                System.Diagnostics.Debug.WriteLine($"\tArchivo temporal borrado {fileName}");
+
+            }
+
+            return base64Files;
         }
     }
 }
