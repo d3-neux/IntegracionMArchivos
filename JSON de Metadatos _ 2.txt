@@ -1,0 +1,10 @@
+{
+	"DocProperties": [
+      {
+			"Name": "PD.NmeroDeDocumento",
+			"Value": "001-001-0000321",
+			"Type": "Text",
+			"Condition": "Equals"
+		}
+	]
+}

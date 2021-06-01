@@ -12,6 +12,10 @@ namespace OperacionesMFiles
     //esta clase representa los criterios de búsqueda que se enviarán a m-files para que devuelva n documentos
 
     //Root myDeserializedClass = JsonConvert.DeserializeObject<MFilesSearchDocument>(myJsonResponse); 
+
+
+
+
     public class DocumenPropertyCondition
     {
         public int Id { get; set; }
@@ -20,6 +24,27 @@ namespace OperacionesMFiles
         public string Value { get; set; }
         public string Type{ get; set; }
         public string Condition { get; set; }
+
+        public DocumenPropertyCondition(int id, string name, string value, string type, string condition)
+        {
+            Id = id;
+            Name = name;
+            Value = value;
+            Type = type;
+            Condition = condition;
+
+
+            foreach (ValueListItem item in IntegracionMFiles.client.ValueListItemOperations.GetValueListItems(1).Items.Where( p => (p.Name == Value)))
+            {
+
+                Value = String.Concat(item.ID);
+               
+            }
+
+        }
+
+
+
 
         /*
             M-Files Conditions operator
@@ -63,21 +88,12 @@ namespace OperacionesMFiles
     public class MFilesSearchDocument
     {
 
-        public List<DocumenPropertyCondition> DocProperties{ get; set; }
-        private List<PropertyValue> MFProperties { get; set; }
-        private List<ISearchCondition> MFConditions { get; set; }
-
-        public MFilesSearchDocument(List<DocumenPropertyCondition> DocProperties)
-        {
-            this.DocProperties = DocProperties;
-            this.MFProperties = GetMFProperties();
-            this.MFConditions = GetMFDocConditions();
-        }
+        public List<DocumenPropertyCondition> DocumenPropertyConditions = new List<DocumenPropertyCondition>();
 
 
         public override string ToString()
         {
-            return $"Properties: {string.Join(",", DocProperties)}";
+            return $"Properties: {string.Join(",", DocumenPropertyConditions)}";
         }
 
 
@@ -85,48 +101,43 @@ namespace OperacionesMFiles
         {
             List<ISearchCondition> documentConditions = new List<ISearchCondition>();
 
-            foreach (var item in DocProperties)
+            foreach (var item in DocumenPropertyConditions)
             {
                 
-                var name = item.Name;
-                var id = item.Id;
+                if (item.Id == 0 && item.Name != "Nombre")
+                    item.Id = IntegracionMFiles.mfPropertyOperator.GetPropertyDefIDByAlias(item.Name);
 
+                //IntegracionMFiles.mfPropertyOperator.get
 
-                if (id == 0)
-                    id = IntegracionMFiles.mfPropertyOperator.GetPropertyDefIDByAlias(name);
-
-
-                var value = item.Value;
-                var type = item.Type.ToLower();
                 //Se obtiene el tipo de condicion de acuerdo al tipo especificado
                 var condition = (SearchConditionOperators)Enum.Parse(typeof(SearchConditionOperators), item.Condition);
-
+                var type = item.Type.ToLower();
 
                 ISearchCondition mfCondition = null;
 
                 if (type == "text")
                 {
-                    mfCondition = new TextPropertyValueSearchCondition(id, value, condition);
+                    mfCondition = new TextPropertyValueSearchCondition(item.Id, item.Value, condition);
                 }
                 else if (type == "date")
                 {
-                    var day = Int32.Parse(value.Split('/')[0]);
-                    var month = Int32.Parse(value.Split('/')[1]);
-                    var year = Int32.Parse(value.Split('/')[2]);
-                    mfCondition = new DatePropertyValueSearchCondition(id, new DateTime(year, month, day), condition);
+                    var day = Int32.Parse(item.Value.Split('/')[0]);
+                    var month = Int32.Parse(item.Value.Split('/')[1]);
+                    var year = Int32.Parse(item.Value.Split('/')[2]);
+                    mfCondition = new DatePropertyValueSearchCondition(item.Id, new DateTime(year, month, day), condition);
                 }
                 else if (type == "floating")
                 {
-                    mfCondition = new NumericPropertyValueSearchCondition(id, Double.Parse(value), condition);
+                    mfCondition = new NumericPropertyValueSearchCondition(item.Id, Double.Parse(item.Value), condition);
 
                 }
                 else if (type == "integer")
                 {
-                    mfCondition = new NumericPropertyValueSearchCondition(id, Int32.Parse(value), condition);
+                    mfCondition = new NumericPropertyValueSearchCondition(item.Id, Int32.Parse(item.Value), condition);
                 }
                 else if (type == "lookup")
                 {
-                    mfCondition = new LookupPropertyValueSearchCondition(id, condition, false, Int32.Parse(value));
+                    mfCondition = new LookupPropertyValueSearchCondition(item.Id, condition, false, Int32.Parse(item.Value));
                 }
                 else
                 {
@@ -135,6 +146,9 @@ namespace OperacionesMFiles
 
                 documentConditions.Add(mfCondition);
             }
+
+            System.Diagnostics.Debug.WriteLine("Conditions; " + JsonConvert.SerializeObject(documentConditions));
+
             return documentConditions;
         }
 
@@ -142,13 +156,12 @@ namespace OperacionesMFiles
         {
             List<PropertyValue> documentProperties = new List<PropertyValue>();
 
-            foreach (var item in DocProperties)
+            foreach (var item in DocumenPropertyConditions)
             {
                 documentProperties.Add(CreateMFProperty(item.Id, item.Value, item.Type));
             }
             return documentProperties;
         }
-
 
         private PropertyValue CreateMFProperty(int id, string value, string type)
         {
@@ -169,6 +182,8 @@ namespace OperacionesMFiles
                 mFDataType = MFDataType.Integer;
                 value = value.Replace(',', '.');
             }
+
+ 
 
             return new PropertyValue
                 {

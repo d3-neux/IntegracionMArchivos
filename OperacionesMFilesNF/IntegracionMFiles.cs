@@ -37,6 +37,8 @@ namespace OperacionesMFiles
             mfPropertyOperator = new MFWSVaultPropertyDefOperations(client);
 
 
+
+
         }
 
 
@@ -256,7 +258,7 @@ namespace OperacionesMFiles
             foreach (var property in properties)
             {
 
-                if (property.PropertyDef > 999)
+                if (property.PropertyDef >= 1020)
                 {
                     var propertyName = client.PropertyDefOperations.GetPropertyDef(property.PropertyDef).Name;
                     var propertyID = property.PropertyDef;

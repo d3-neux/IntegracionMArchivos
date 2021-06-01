@@ -70,6 +70,23 @@ namespace MFilesWebAPI.Controllers
             return objIntegracionMFiles.GetFilesAndMetadata(documento, false); ;
         }
 
+
+        [HttpGet]
+        [Route("api/MFiles/DinersGetDocuments/")]
+        public List<MFilesDocument> DinersGetDocuments(DinersSearchDocument documento)
+        {
+            documento.initialize();
+            System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
+            
+            var documents = objIntegracionMFiles.GetFilesAndMetadata(documento, true);
+
+            
+
+            return documents;
+        }
+
+
+
         /// <summary>
         ///  Descarga el archivo relacionado al Código ERP
         /// </summary>

@@ -40,6 +40,7 @@ namespace OperacionesMFiles
         [JsonProperty("Files", NullValueHandling = NullValueHandling.Ignore)]
         public List<byte[]> Files { get; set; }
 
+
         public MFilesDocument(List<DocumentProperty> DocProperties, List<byte[]> Files)
         {
             this.DocProperties = DocProperties;
@@ -57,48 +58,9 @@ namespace OperacionesMFiles
         {
             return $"Properties: {string.Join(",", DocProperties)}";
         }
+
+
+
     }
 }
 
-
-/*
-    id: "1147", // numero de documento
-    id: "1002", // fecha de documento
-    id: "1148", // ruc
-    id: "1149", // total
-    id: "39", 	// estado 
-
-     
-    {
-	class: "2",
-	properties: [
-		{
-			id: "1147",
-			value: "",
-			type: "text",
-			condition: "equal"
-		},
-		{
-			id: "1002", 
-			value: "",
-			type: "date",
-			condition: "equal"
-		},
-		{
-			id: "1148",
-			value: "",
-			type: "text",
-			condition: "equal"
-		},
-		{
-			id: "1149",
-			value: "12.25",
-			type: "floating",
-			condition: "equal"
-		}
-	]
-}
-
-
-
-     */
