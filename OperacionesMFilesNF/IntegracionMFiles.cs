@@ -39,25 +39,67 @@ namespace OperacionesMFiles
         }
 
 
-        public Object GetDinersFilesAndMetadata(DinersSearchDocument searchDocument, Boolean includeFiles)
+        public Object GetDinersDocuments(DinersSearchDocument searchDocument, Boolean includeFiles)
         {
             List<MFilesDocument> mfilesDocuments;
 
             string objRespuesta;
-            var numPagActual = "1";
-            var numTotalPag = "2";
-            var numTotalRegs = "3";
 
             if (searchDocument.operation == "DOC_HIT_LIST")
             {
                 mfilesDocuments = GetFilesAndMetadata(searchDocument, false);
 
-                
+                if (mfilesDocuments.Count() == 0)
+                {
 
-                objRespuesta = $"{{numPagActual:'{numPagActual}',numTotalPag:'{numTotalPag}',numTotalRegs:'{numTotalRegs}',";
+                    return JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-2", mensaje = $"Busqueda no tiene resultado {searchDocument}" });
+                }
+
+                var numPagActual = searchDocument.numPagActual;
+                var cantRegistros = searchDocument.cantRegistros;
+                var numTotalPag = Math.Ceiling(Double.Parse(mfilesDocuments.Count() + "") / Double.Parse(cantRegistros + ""));
+                var numTotalRegs = -1;
+
+
+                var rangoInicial = cantRegistros * (numPagActual - 1) + 1;
+
+                if (rangoInicial > mfilesDocuments.Count())
+                    rangoInicial = mfilesDocuments.Count() + 1;
+
+                if (numPagActual == 1)
+                    rangoInicial = 1;
+
+                if (numPagActual < 1 || cantRegistros == 0)
+                    rangoInicial = 0;
+
+                var rangoFinal = cantRegistros * numPagActual;
+
+                if (rangoFinal > mfilesDocuments.Count())
+                    rangoFinal = mfilesDocuments.Count();
+
+
+                numTotalRegs = rangoFinal - rangoInicial;
+
+                if (numTotalRegs != 0)
+                    numTotalRegs++;
+
+                objRespuesta = $"{{rangoInicial:'{rangoInicial}',rangoFinal:'{rangoFinal}',";
+                objRespuesta += $"mfilesDocumentsCount:'{mfilesDocuments.Count()}',";
+
+
+
+                objRespuesta += $"numPagActual:'{numPagActual}',numTotalPag:'{numTotalPag}',numTotalRegs:'{numTotalRegs}',";
                 objRespuesta += "doc: [";
 
-                foreach(MFilesDocument documento in mfilesDocuments)
+
+                if (rangoInicial > 0 && rangoFinal <= mfilesDocuments.Count())
+                {
+
+                    mfilesDocuments = mfilesDocuments.GetRange(rangoInicial, numTotalRegs);
+                }
+
+
+                foreach (MFilesDocument documento in mfilesDocuments)
                 {
                     objRespuesta += "{" +
                         $"{documento.GetDinersPropertiesString()}" +
@@ -68,7 +110,8 @@ namespace OperacionesMFiles
                 objRespuesta += "]}";
 
             }
-            else {
+            else
+            {
                 mfilesDocuments = GetFilesAndMetadata(searchDocument, true);
 
                 objRespuesta = "{" +
@@ -95,17 +138,17 @@ namespace OperacionesMFiles
                 if (results.Length == 0)
                 {
                     System.Diagnostics.Debug.WriteLine("Busqueda no devolvió resultados");
-                    mfilesDocuments.Add( (new MFilesDocument("Busqueda no devolvió resultados") ) ) ;
+                    mfilesDocuments.Add((new MFilesDocument("Busqueda no devolvió resultados")));
                     return mfilesDocuments;
                 }
 
-                
+
                 //Si hay resultados
                 foreach (var objectVersion in results)
                 {
                     var files = includeFiles ? GetDocumentFiles(objectVersion) : null;
                     mfilesDocuments.Add(new MFilesDocument(GetDocumentProperties(objectVersion), files, objectVersion.ObjVer.ID));
-                    
+
                 }
             }
             catch (Exception ex)
@@ -118,7 +161,7 @@ namespace OperacionesMFiles
             return mfilesDocuments;
         }
 
-        
+
 
 
         /// <summary>
@@ -130,8 +173,12 @@ namespace OperacionesMFiles
         public Tuple<byte[], string> GetFile(MFilesSearchDocument document)
         {
 
-            var errorStr = JsonConvert.SerializeObject(new { origen = this.GetType().FullName + "." + System.Reflection.MethodBase.GetCurrentMethod().Name + " - 1 "
-                , mensaje = $"Búsqueda [{document.ToString()}] no devolvió resultados" });
+            var errorStr = JsonConvert.SerializeObject(new
+            {
+                origen = this.GetType().FullName + "." + System.Reflection.MethodBase.GetCurrentMethod().Name + " - 1 "
+                ,
+                mensaje = $"Búsqueda [{document.ToString()}] no devolvió resultados"
+            });
 
             Tuple<byte[], string> archivosDescargados = new Tuple<byte[], string>(null, errorStr);
             //try
@@ -264,7 +311,7 @@ namespace OperacionesMFiles
         /// </summary>
         /// <param name="documento">Recibe objeto de la clase MFilesDocument</param>
         /// <returns>PropertyValue[] </returns>
-        
+
 
         /// <summary>
         /// Obtiene un objVersion que coindica con el parámetro de búsqueda

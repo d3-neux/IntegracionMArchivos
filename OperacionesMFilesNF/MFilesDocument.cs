@@ -4,14 +4,14 @@ using Newtonsoft.Json;
 
 namespace OperacionesMFiles
 {
-    
+
 
     //Root myDeserializedClass = JsonConvert.DeserializeObject<MFilesSearchDocument>(myJsonResponse); 
     public class DocumentProperty
     {
         public int Id { get; set; }
         public string Value { get; set; }
-        public string Name{ get; set; }
+        public string Name { get; set; }
 
         public DocumentProperty(int id, string value, string name)
         {
@@ -31,7 +31,7 @@ namespace OperacionesMFiles
     public class MFilesDocument
     {
         public int ObjectID { get; set; }
-        public List<DocumentProperty> DocProperties{ get; set; }
+        public List<DocumentProperty> DocProperties { get; set; }
 
         [JsonProperty("Files", NullValueHandling = NullValueHandling.Ignore)]
         public List<byte[]> Files { get; set; }

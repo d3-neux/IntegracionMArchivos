@@ -72,13 +72,13 @@ namespace MFilesWebAPI.Controllers
 
 
         [HttpGet]
-        [Route("api/MFiles/DinersGetDocuments/")]
-        public Object DinersGetDocuments(DinersSearchDocument documento)
+        [Route("api/MFiles/GetDinersDocuments/")]
+        public Object GetDinersDocuments(DinersSearchDocument documento)
         {
             documento.initialize();
             System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
             
-            var documents = objIntegracionMFiles.GetDinersFilesAndMetadata(documento, true);
+            var documents = objIntegracionMFiles.GetDinersDocuments(documento, true);
 
             return documents;
         }

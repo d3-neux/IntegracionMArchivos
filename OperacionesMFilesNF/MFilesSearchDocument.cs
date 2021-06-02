@@ -22,7 +22,7 @@ namespace OperacionesMFiles
         public string Name { get; set; }
 
         public string Value { get; set; }
-        public string Type{ get; set; }
+        public string Type { get; set; }
         public string Condition { get; set; }
 
         public DocumenPropertyCondition(int id, string name, string value, string type, string condition)
@@ -34,11 +34,11 @@ namespace OperacionesMFiles
             Condition = condition;
 
 
-            foreach (ValueListItem item in IntegracionMFiles.client.ValueListItemOperations.GetValueListItems(1).Items.Where( p => (p.Name == Value)))
+            foreach (ValueListItem item in IntegracionMFiles.client.ValueListItemOperations.GetValueListItems(1).Items.Where(p => (p.Name == Value)))
             {
 
                 Value = String.Concat(item.ID);
-               
+
             }
 
         }
@@ -97,13 +97,13 @@ namespace OperacionesMFiles
         }
 
 
-        public List<ISearchCondition>  GetMFDocConditions()
+        public List<ISearchCondition> GetMFDocConditions()
         {
             List<ISearchCondition> documentConditions = new List<ISearchCondition>();
 
             foreach (var item in DocumenPropertyConditions)
             {
-                
+
                 if (item.Id == 0 && item.Name != "Nombre")
                     item.Id = IntegracionMFiles.mfPropertyOperator.GetPropertyDefIDByAlias(item.Name);
 
@@ -183,23 +183,23 @@ namespace OperacionesMFiles
                 value = value.Replace(',', '.');
             }
 
- 
+
 
             return new PropertyValue
-                {
-                    PropertyDef = id,
-                    TypedValue = new TypedValue { DataType = mFDataType, Value = value }
-                };
+            {
+                PropertyDef = id,
+                TypedValue = new TypedValue { DataType = mFDataType, Value = value }
+            };
         }
 
 
-        
-        
+
+
 
 
     }
 
-    
+
 }
 
 

@@ -19,12 +19,12 @@ namespace OperacionesMFiles
         public string value2 { get; set; }
     }
 
-    public class DinersSearchDocument: MFilesSearchDocument
+    public class DinersSearchDocument : MFilesSearchDocument
     {
         public string context { get; set; }
         public string operation { get; set; }
-        public string numPagActual { get; set; }
-        public string cantRegistros { get; set; }
+        public int numPagActual { get; set; } = 0;
+        public int cantRegistros { get; set; } = 0;
         public string idtrace { get; set; }
 
 
@@ -45,7 +45,7 @@ namespace OperacionesMFiles
 
             }
 
-            
+
 
 
             foreach (Parameter par in parameter)
