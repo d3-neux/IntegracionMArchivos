@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 
@@ -35,28 +36,66 @@ namespace OperacionesMFiles
                 pass);
 
             mfPropertyOperator = new MFWSVaultPropertyDefOperations(client);
-
-
-
-
         }
 
+
+        public Object GetDinersFilesAndMetadata(DinersSearchDocument searchDocument, Boolean includeFiles)
+        {
+            List<MFilesDocument> mfilesDocuments;
+
+            string objRespuesta;
+            var numPagActual = "1";
+            var numTotalPag = "2";
+            var numTotalRegs = "3";
+
+            if (searchDocument.operation == "DOC_HIT_LIST")
+            {
+                mfilesDocuments = GetFilesAndMetadata(searchDocument, false);
+
+                
+
+                objRespuesta = $"{{numPagActual:'{numPagActual}',numTotalPag:'{numTotalPag}',numTotalRegs:'{numTotalRegs}',";
+                objRespuesta += "doc: [";
+
+                foreach(MFilesDocument documento in mfilesDocuments)
+                {
+                    objRespuesta += "{" +
+                        $"{documento.GetDinersPropertiesString()}" +
+                        "},";
+                }
+
+                objRespuesta = objRespuesta.Substring(0, objRespuesta.Length - 1);
+                objRespuesta += "]}";
+
+            }
+            else {
+                mfilesDocuments = GetFilesAndMetadata(searchDocument, true);
+
+                objRespuesta = "{" +
+                        $"{mfilesDocuments.ElementAt(0).GetDinersFilesString()}" +
+                        "}";
+
+            }
+
+
+            System.Diagnostics.Debug.WriteLine(objRespuesta);
+
+
+            return JsonConvert.DeserializeObject(objRespuesta); ;
+        }
 
         public List<MFilesDocument> GetFilesAndMetadata(MFilesSearchDocument searchDocument, Boolean includeFiles)
         {
             List<MFilesDocument> mfilesDocuments = new List<MFilesDocument>();
 
-            //try
+            try
             {
                 //Se crea la condición de búsqueda
                 var results = client.ObjectSearchOperations.SearchForObjectsByConditions(searchDocument.GetMFDocConditions().ToArray());
-
                 if (results.Length == 0)
                 {
                     System.Diagnostics.Debug.WriteLine("Busqueda no devolvió resultados");
-
                     mfilesDocuments.Add( (new MFilesDocument("Busqueda no devolvió resultados") ) ) ;
-
                     return mfilesDocuments;
                 }
 
@@ -65,18 +104,17 @@ namespace OperacionesMFiles
                 foreach (var objectVersion in results)
                 {
                     var files = includeFiles ? GetDocumentFiles(objectVersion) : null;
-                    MFilesDocument mfilesDocument = new MFilesDocument(GetDocumentProperties(objectVersion), files);
-                    mfilesDocuments.Add(mfilesDocument);
+                    mfilesDocuments.Add(new MFilesDocument(GetDocumentProperties(objectVersion), files, objectVersion.ObjVer.ID));
+                    
                 }
             }
-            /*catch (Exception ex)
+            catch (Exception ex)
             {
-                errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-3", mensaje = ex.ToString() });
-                System.Diagnostics.Debug.WriteLine(ex.ToString());
-                return new Tuple<byte[], string>(null, errorStr);
+                mfilesDocuments = new List<MFilesDocument>();
+                mfilesDocuments.Add((new MFilesDocument($"Busqueda no devolvió resultados: {ex.ToString()}")));
+                return mfilesDocuments;
 
-
-            }*/
+            }
             return mfilesDocuments;
         }
 

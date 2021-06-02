@@ -53,7 +53,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IntegracionMFiles.cs" />
-    <Compile Include="DinersDocument.cs" />
     <Compile Include="MFilesDocument.cs" />
     <Compile Include="DinersSearchDocument.cs" />
     <Compile Include="MFilesSearchDocument.cs" />

@@ -31,6 +31,9 @@ namespace OperacionesMFiles
         public List<Parameter> parameter = new List<Parameter>();
 
 
+
+
+
         public void initialize()
         {
             DocumenPropertyConditions = new List<DocumenPropertyCondition>();
