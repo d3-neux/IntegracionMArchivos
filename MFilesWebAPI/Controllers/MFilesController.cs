@@ -29,8 +29,26 @@ namespace MFilesWebAPI.Controllers
         private static readonly string user      = WebConfigurationManager.AppSettings["MFILES_USER"].ToString();
         private static readonly string pass      = WebConfigurationManager.AppSettings["MFILES_PASS"].ToString();
 
-
         private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass);
+
+        /// <summary>
+        /// Obtiene un objeto que representa los resultados de una búsqueda
+        /// </summary>
+        /// <param name="documento">Parámetros de búsqueda según </param>
+        /// <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado</returns>
+
+
+        //[HttpGet]
+        //[Route("api/MFiles/GetDinersDocuments/")]
+        //public Object GetDinersDocuments(DinersSearchDocument documento)
+        //{
+        //    documento.initialize();
+        //    System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
+
+        //    var documents = objIntegracionMFiles.GetDinersDocuments(documento, true);
+
+        //    return documents;
+        //}
 
         /// <summary>
         /// Obtiene tupla de bytes (archivo) y extensión del documento relacionado al Código ERP
@@ -38,15 +56,15 @@ namespace MFilesWebAPI.Controllers
         /// <param name="documento">Código ERP</param>
         /// <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado</returns>
 
-        // API/MFiles/{ID}
-        [HttpGet]
-        [Route("api/MFiles/")]
-        public Tuple<byte[], string> Get(MFilesSearchDocument documento)
-        {
-            System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
+        //// API/MFiles/{ID}
+        //[HttpGet]
+        //[Route("api/MFiles/")]
+        //public Tuple<byte[], string> Get(MFilesSearchDocument documento)
+        //{
+        //    System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
 
-            return objIntegracionMFiles.GetFile(documento); ;
-        }
+        //    return objIntegracionMFiles.GetFile(documento); ;
+        //}
 
 
         [HttpGet]
@@ -61,7 +79,7 @@ namespace MFilesWebAPI.Controllers
 
         [HttpGet]
         [Route("api/MFiles/GetOnlyMetadata/")]
-        
+
         public List<MFilesDocument> GetOnlyMetadata(MFilesSearchDocument documento)
         {
             //Devuelve el objeto como respuesta
@@ -71,17 +89,7 @@ namespace MFilesWebAPI.Controllers
         }
 
 
-        [HttpGet]
-        [Route("api/MFiles/GetDinersDocuments/")]
-        public Object GetDinersDocuments(DinersSearchDocument documento)
-        {
-            documento.initialize();
-            System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
-            
-            var documents = objIntegracionMFiles.GetDinersDocuments(documento, true);
 
-            return documents;
-        }
 
 
 
@@ -90,51 +98,51 @@ namespace MFilesWebAPI.Controllers
         /// </summary>
         /// <param name="documento">Código ERP</param>
         /// <returns>HttpResponseMessage con el archivo como contenido </returns>
-        [HttpGet]
-        [Route("api/MFiles/DownloadFile/")]
-        public HttpResponseMessage GetDocFirstFile(MFilesSearchDocument documento)
-        {
-            System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
-            //MFilesSearchDocument documento = JsonConvert.DeserializeObject<MFilesSearchDocument>(documentoJSON);
-
-            
-            //Descarga los archivos usando el Código ERP
-            var archivosDescargados = objIntegracionMFiles.GetFile(documento);
-
-            //Obtiene el archivo en bytes y la extención, si es null el mensaje de error es extraído desde Item2
-            var file = archivosDescargados.Item1;
-            var extension = archivosDescargados.Item2;
-            
-            HttpResponseMessage result;
-            
-            if (file == null)
-            {
-                result = new HttpResponseMessage(HttpStatusCode.NotFound);
-                result.Content = new StringContent(extension);
-            }
-            else
-            {
-                //Genera un nombre único para el archivo
-                string fileName = $@"{Guid.NewGuid()}." + extension;
-                System.Diagnostics.Debug.WriteLine($"\tArchivo descargado: {fileName}");
+        //[HttpGet]
+        //[Route("api/MFiles/DownloadFile/")]
+        //public HttpResponseMessage GetDocFirstFile(MFilesSearchDocument documento)
+        //{
+        //    System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
+        //    //MFilesSearchDocument documento = JsonConvert.DeserializeObject<MFilesSearchDocument>(documentoJSON);
 
 
-                //Se crea el archivo y se lo asigna al mensaje de respuesta
-                var fileMemStream = new MemoryStream(file);
+        //    //Descarga los archivos usando el Código ERP
+        //    var archivosDescargados = objIntegracionMFiles.GetFile(documento);
 
-                result = new HttpResponseMessage(HttpStatusCode.OK);
-                result.Content = new StreamContent(fileMemStream);
+        //    //Obtiene el archivo en bytes y la extención, si es null el mensaje de error es extraído desde Item2
+        //    var file = archivosDescargados.Item1;
+        //    var extension = archivosDescargados.Item2;
 
-                //se define el header de la respuesta
+        //    HttpResponseMessage result;
 
-                var headers = result.Content.Headers;
-                headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-                headers.ContentDisposition.FileName = fileName;
-                headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                headers.ContentLength = fileMemStream.Length;
-            }
-            return result;
-        }
+        //    if (file == null)
+        //    {
+        //        result = new HttpResponseMessage(HttpStatusCode.NotFound);
+        //        result.Content = new StringContent(extension);
+        //    }
+        //    else
+        //    {
+        //        //Genera un nombre único para el archivo
+        //        string fileName = $@"{Guid.NewGuid()}." + extension;
+        //        System.Diagnostics.Debug.WriteLine($"\tArchivo descargado: {fileName}");
+
+
+        //        //Se crea el archivo y se lo asigna al mensaje de respuesta
+        //        var fileMemStream = new MemoryStream(file);
+
+        //        result = new HttpResponseMessage(HttpStatusCode.OK);
+        //        result.Content = new StreamContent(fileMemStream);
+
+        //        //se define el header de la respuesta
+
+        //        var headers = result.Content.Headers;
+        //        headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+        //        headers.ContentDisposition.FileName = fileName;
+        //        headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        //        headers.ContentLength = fileMemStream.Length;
+        //    }
+        //    return result;
+        //}
 
         /// <summary>
         /// Actualiza la información de un Documento en M-Files que coincida con el Código ERP
@@ -150,6 +158,6 @@ namespace MFilesWebAPI.Controllers
             return resultado;
         }*/
 
-        
+
     }
 }

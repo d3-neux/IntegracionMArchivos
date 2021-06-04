@@ -42,8 +42,8 @@ namespace OperacionesMFiles
         public Object GetDinersDocuments(DinersSearchDocument searchDocument, Boolean includeFiles)
         {
             List<MFilesDocument> mfilesDocuments;
-
-            string objRespuesta;
+            
+            string objRespuesta = "{";
 
             if (searchDocument.operation == "DOC_HIT_LIST")
             {
@@ -57,7 +57,17 @@ namespace OperacionesMFiles
 
                 var numPagActual = searchDocument.numPagActual;
                 var cantRegistros = searchDocument.cantRegistros;
-                var numTotalPag = Math.Ceiling(Double.Parse(mfilesDocuments.Count() + "") / Double.Parse(cantRegistros + ""));
+                var numTotalPag = 0d;
+
+
+                if (cantRegistros != 0)
+                    numTotalPag = Math.Ceiling(Double.Parse(mfilesDocuments.Count() + "") / Double.Parse(cantRegistros  + ""));
+
+
+
+
+
+
                 var numTotalRegs = -1;
 
 
@@ -83,19 +93,27 @@ namespace OperacionesMFiles
                 if (numTotalRegs != 0)
                     numTotalRegs++;
 
-                objRespuesta = $"{{rangoInicial:'{rangoInicial}',rangoFinal:'{rangoFinal}',";
-                objRespuesta += $"mfilesDocumentsCount:'{mfilesDocuments.Count()}',";
+                /*objRespuesta += $"rangoInicial:'{rangoInicial}',rangoFinal:'{rangoFinal}',";
+                objRespuesta += $"mfilesDocumentsCount:'{mfilesDocuments.Count()}',";*/
 
+
+                if (numPagActual == numTotalPag && numPagActual != 0)
+                    numTotalRegs = rangoFinal - rangoInicial + 1;
+
+                if (numPagActual == 0 && numTotalPag == 0)
+                    numTotalRegs = mfilesDocuments.Count();
+
+                if (rangoInicial != 0 && rangoInicial == rangoFinal && rangoFinal <= mfilesDocuments.Count())
+                    numTotalRegs = 1;
 
 
                 objRespuesta += $"numPagActual:'{numPagActual}',numTotalPag:'{numTotalPag}',numTotalRegs:'{numTotalRegs}',";
                 objRespuesta += "doc: [";
 
 
-                if (rangoInicial > 0 && rangoFinal <= mfilesDocuments.Count())
+                if (rangoInicial > 0 && rangoInicial <= rangoFinal && rangoFinal <= mfilesDocuments.Count())
                 {
-
-                    mfilesDocuments = mfilesDocuments.GetRange(rangoInicial, numTotalRegs);
+                    mfilesDocuments = mfilesDocuments.GetRange(rangoInicial - 1, numTotalRegs);
                 }
 
 
@@ -105,8 +123,10 @@ namespace OperacionesMFiles
                         $"{documento.GetDinersPropertiesString()}" +
                         "},";
                 }
+                if (mfilesDocuments.Count() != 0)
+                    objRespuesta = objRespuesta.Substring(0, objRespuesta.Length - 1);
 
-                objRespuesta = objRespuesta.Substring(0, objRespuesta.Length - 1);
+
                 objRespuesta += "]}";
 
             }

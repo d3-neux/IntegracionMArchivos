@@ -53,8 +53,9 @@ namespace OperacionesMFiles
                 var condition1 = "";
                 var condition2 = "";
 
-                switch (par.@operator)
+                switch (par.@operator.ToLower())
                 {
+                    case "null":
                     case "":
                     case "1":
                         condition1 = "Equals";

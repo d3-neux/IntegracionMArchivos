@@ -487,19 +487,12 @@
             
             </summary>
         </member>
-        <member name="M:MFilesWebAPI.Controllers.MFilesController.Get(OperacionesMFiles.MFilesSearchDocument)">
+        <member name="M:MFilesWebAPI.Controllers.MFilesController.GetDinersDocuments(OperacionesMFiles.DinersSearchDocument)">
             <summary>
-            Obtiene tupla de bytes (archivo) y extensión del documento relacionado al Código ERP
+            Obtiene un objeto que representa los resultados de una búsqueda
             </summary>
-            <param name="documento">Código ERP</param>
+            <param name="documento">Parámetros de búsqueda según </param>
             <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado</returns>
-        </member>
-        <member name="M:MFilesWebAPI.Controllers.MFilesController.GetDocFirstFile(OperacionesMFiles.MFilesSearchDocument)">
-            <summary>
-             Descarga el archivo relacionado al Código ERP
-            </summary>
-            <param name="documento">Código ERP</param>
-            <returns>HttpResponseMessage con el archivo como contenido </returns>
         </member>
         <member name="T:MFilesWebAPI.WebApiApplication">
             <summary>
