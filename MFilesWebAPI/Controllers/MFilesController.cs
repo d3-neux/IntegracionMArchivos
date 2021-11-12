@@ -1,20 +1,13 @@
 ﻿using OperacionesMFiles;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Web.Configuration;
 using System.Web.Http;
 using NLog;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace MFilesWebAPI.Controllers
 {
-
-
     /// <summary>
     /// Integración de M-Files
     /// 
@@ -22,13 +15,10 @@ namespace MFilesWebAPI.Controllers
     public class MFilesController : ApiController
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-
-
-        private static readonly string server    = WebConfigurationManager.AppSettings["MFILES_SERVER"].ToString();
-        private static readonly string boveda    = WebConfigurationManager.AppSettings["MFILES_VAULT"].ToString();
-        private static readonly string user      = WebConfigurationManager.AppSettings["MFILES_USER"].ToString();
-        private static readonly string pass      = WebConfigurationManager.AppSettings["MFILES_PASS"].ToString();
-
+        private static readonly string server = WebConfigurationManager.AppSettings["MFILES_SERVER"].ToString();
+        private static readonly string boveda = WebConfigurationManager.AppSettings["MFILES_VAULT"].ToString();
+        private static readonly string user = WebConfigurationManager.AppSettings["MFILES_USER"].ToString();
+        private static readonly string pass = WebConfigurationManager.AppSettings["MFILES_PASS"].ToString();
         private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass);
 
         /// <summary>
@@ -37,18 +27,42 @@ namespace MFilesWebAPI.Controllers
         /// <param name="documento">Parámetros de búsqueda según </param>
         /// <returns>Una lista de tuplas con los bytes y extensión de cada archivo asociado</returns>
 
+        
+        /*[HttpGet]
+        [Route("api/MFiles/GetDinersDocuments/")]
+        public Object GetDinersDocuments(DinersSearchDocument documento)
+        {
+            try
+            {
+                documento.initialize();
+                System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
+                var documents = objIntegracionMFiles.GetDinersDocumentsRedo(documento, true);
+                return documents;
+            }
+            catch (Exception e)
+            {
+                return new OperacionesMFiles.ErrorClass("12", "JSON de request no es válido");
+            }
+        }*/
 
-        //[HttpGet]
-        //[Route("api/MFiles/GetDinersDocuments/")]
-        //public Object GetDinersDocuments(DinersSearchDocument documento)
-        //{
-        //    documento.initialize();
-        //    System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
-
-        //    var documents = objIntegracionMFiles.GetDinersDocuments(documento, true);
-
-        //    return documents;
-        //}
+        
+        [HttpPost]
+        [Route("api/MFiles/GetPostDinersDocuments/")]
+        public Object GetPostDinersDocuments(DinersSearchDocument documento)
+        {
+            try 
+            { 
+                documento.initialize();
+                System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
+                var documents = objIntegracionMFiles.GetDinersDocumentsRedo(documento, true);
+                return documents;
+            }
+            catch (Exception e)
+            {
+                return new OperacionesMFiles.ErrorClass("12", "JSON de request no es válido");
+            }
+        }
+        
 
         /// <summary>
         /// Obtiene tupla de bytes (archivo) y extensión del documento relacionado al Código ERP
@@ -65,33 +79,30 @@ namespace MFilesWebAPI.Controllers
 
         //    return objIntegracionMFiles.GetFile(documento); ;
         //}
-
-
-        [HttpGet]
+        
+            /*
+        [HttpPost]
         [Route("api/MFiles/GetFilesAndMetadata/")]
         public List<MFilesDocument> GetFilesAndMetadata(MFilesSearchDocument documento)
         {
             System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
-
-            return objIntegracionMFiles.GetFilesAndMetadata(documento, true); ;
+            var resultado = objIntegracionMFiles.GetFilesAndMetadata(documento, true);
+            logger.Info($"GetFilesAndMetadata: Request BODY: {JsonConvert.SerializeObject(documento)} Results count: {resultado.Count}");
+            return resultado;
         }
 
-
-        [HttpGet]
+        [HttpPost]
         [Route("api/MFiles/GetOnlyMetadata/")]
-
         public List<MFilesDocument> GetOnlyMetadata(MFilesSearchDocument documento)
         {
             //Devuelve el objeto como respuesta
             System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
+            var resultado = objIntegracionMFiles.GetFilesAndMetadata(documento, false);
+            logger.Info($"GetOnlyMetadata: Request BODY: {JsonConvert.SerializeObject(documento)} Results count: {resultado.Count}");
+            return resultado;
 
-            return objIntegracionMFiles.GetFilesAndMetadata(documento, false); ;
         }
-
-
-
-
-
+        */
 
         /// <summary>
         ///  Descarga el archivo relacionado al Código ERP
@@ -104,8 +115,6 @@ namespace MFilesWebAPI.Controllers
         //{
         //    System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
         //    //MFilesSearchDocument documento = JsonConvert.DeserializeObject<MFilesSearchDocument>(documentoJSON);
-
-
         //    //Descarga los archivos usando el Código ERP
         //    var archivosDescargados = objIntegracionMFiles.GetFile(documento);
 

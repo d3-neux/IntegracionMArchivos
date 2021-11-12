@@ -30,10 +30,6 @@ namespace OperacionesMFiles
 
         public List<Parameter> parameter = new List<Parameter>();
 
-
-
-
-
         public void initialize()
         {
             DocumenPropertyConditions = new List<DocumenPropertyCondition>();
@@ -42,11 +38,7 @@ namespace OperacionesMFiles
             if (operation != "DOC_HIT_LIST")
             {
                 DocumenPropertyConditions.Add(new DocumenPropertyCondition(0, "PD.TipoArchivo", operation.ToUpper(), "text", "Equals"));
-
             }
-
-
-
 
             foreach (Parameter par in parameter)
             {
@@ -112,55 +104,8 @@ namespace OperacionesMFiles
                 if (condition2 != "")
                     DocumenPropertyConditions.Add(new DocumenPropertyCondition(0, par.field, par.value2, "Text", condition2));
             }
-
-
         }
     }
-
-
-
-
 }
 
 
-/*
-    id: "1147", // numero de documento
-    id: "1002", // fecha de documento
-    id: "1148", // ruc
-    id: "1149", // total
-    id: "39", 	// estado 
-
-     
-    {
-	class: "2",
-	properties: [
-		{
-			id: "1147",
-			value: "",
-			type: "text",
-			condition: "equal"
-		},
-		{
-			id: "1002", 
-			value: "",
-			type: "date",
-			condition: "equal"
-		},
-		{
-			id: "1148",
-			value: "",
-			type: "text",
-			condition: "equal"
-		},
-		{
-			id: "1149",
-			value: "12.25",
-			type: "floating",
-			condition: "equal"
-		}
-	]
-}
-
-
-
-     */

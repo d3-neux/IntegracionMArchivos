@@ -28,6 +28,7 @@ namespace OperacionesMFiles
         /// <param name="pass">Contraseña</param>
         public IntegracionMFiles(String server, String boveda, String user, String pass)
         {
+
             client = new MFWSClient(server);
 
             client.AuthenticateUsingCredentials(
@@ -38,34 +39,40 @@ namespace OperacionesMFiles
             mfPropertyOperator = new MFWSVaultPropertyDefOperations(client);
         }
 
-
-        public Object GetDinersDocuments(DinersSearchDocument searchDocument, Boolean includeFiles)
+        public Object GetDinersDocumentsRedo(DinersSearchDocument searchDocument, Boolean includeFiles)
         {
             List<MFilesDocument> mfilesDocuments;
-            
-            string objRespuesta = "{";
 
-            if (searchDocument.operation == "DOC_HIT_LIST")
+
+            if (searchDocument.parameter.Count() == 0)
             {
-                mfilesDocuments = GetFilesAndMetadata(searchDocument, false);
+                return new ErrorClass("03", "El array parameters se encuentra vacío");
+
+            }
+            else if (searchDocument.idtrace == null)
+            {
+                return new ErrorClass("04", "El campo idTrace es obligatorio para la consulta");
+            }
+            else if (searchDocument.operation == "DOC_HIT_LIST")
+            {
+                mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList(); ;
 
                 if (mfilesDocuments.Count() == 0)
                 {
-
-                    return JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-2", mensaje = $"Busqueda no tiene resultado {searchDocument}" });
+                    return new ErrorClass("11", "La búsqueda no devolvió resultados");
                 }
 
                 var numPagActual = searchDocument.numPagActual;
                 var cantRegistros = searchDocument.cantRegistros;
-                var numTotalPag = 0d;
+                var numTotalPag = 0;
 
 
                 if (cantRegistros != 0)
-                    numTotalPag = Math.Ceiling(Double.Parse(mfilesDocuments.Count() + "") / Double.Parse(cantRegistros  + ""));
+                    numTotalPag = (int) Math.Ceiling(Double.Parse(mfilesDocuments.Count() + "") / Double.Parse(cantRegistros + ""));
 
 
-
-
+                if (numTotalPag == 1 && numPagActual > 1)
+                    numPagActual = 1;
 
 
                 var numTotalRegs = -1;
@@ -92,6 +99,122 @@ namespace OperacionesMFiles
 
                 if (numTotalRegs != 0)
                     numTotalRegs++;
+
+                if (numTotalRegs == 0 && mfilesDocuments.Count() != 0)
+                    numTotalRegs = mfilesDocuments.Count();
+
+
+                /*objRespuesta += $"rangoInicial:'{rangoInicial}',rangoFinal:'{rangoFinal}',";
+                objRespuesta += $"mfilesDocumentsCount:'{mfilesDocuments.Count()}',";*/
+
+
+                if (numPagActual == numTotalPag && numPagActual != 0)
+                    numTotalRegs = rangoFinal - rangoInicial + 1;
+
+                if (numPagActual == 0 && numTotalPag == 0)
+                    numTotalRegs = mfilesDocuments.Count();
+
+                if (rangoInicial != 0 && rangoInicial == rangoFinal && rangoFinal <= mfilesDocuments.Count())
+                    numTotalRegs = 1;
+
+                if (rangoInicial > 0 && rangoInicial <= rangoFinal && rangoFinal <= mfilesDocuments.Count())
+                {
+                    mfilesDocuments = mfilesDocuments.GetRange(rangoInicial - 1, numTotalRegs);
+                }
+
+                DinersResultList dinersResultList = new DinersResultList(numPagActual, numTotalPag, numTotalRegs, mfilesDocuments);
+                //System.Diagnostics.Debug.WriteLine("HERE " + dinersResultList);
+
+                return dinersResultList;
+
+            }
+            else if (searchDocument.operation == "PDF" || searchDocument.operation == "XML" || searchDocument.operation == "XLS")
+            {
+                mfilesDocuments = GetFilesAndMetadata(searchDocument, true);
+
+                if (mfilesDocuments.Count() == 0)
+                {
+                    return new ErrorClass("11", "La búsqueda no devolvió resultados");
+                }
+
+                DinersResultDocument dinersResultDocument = new DinersResultDocument(mfilesDocuments.ElementAt(0).Files);
+
+                return dinersResultDocument;
+
+            }
+            else
+            {
+                return new ErrorClass("02", "El operador consultado no es válido");
+
+            }
+
+        }
+
+        public Object GetDinersDocuments(DinersSearchDocument searchDocument, Boolean includeFiles)
+        {
+            List<MFilesDocument> mfilesDocuments;
+
+            string objRespuesta = "{";
+
+            if (searchDocument.parameter.Count() == 0)
+            {
+                return new ErrorClass ("03", "El array parameters se encuentra vacío");
+
+            }
+            else if (searchDocument.idtrace == null)
+            {
+                return new ErrorClass("04", "El campo idTrace es obligatorio para la consulta");
+            }
+            else if (searchDocument.operation == "DOC_HIT_LIST")
+            {
+                mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList(); ;
+
+                if (mfilesDocuments.Count() == 0)
+                {
+                    return new ErrorClass("11", "La búsqueda no devolvió resultados");
+                }
+
+                var numPagActual = searchDocument.numPagActual;
+                var cantRegistros = searchDocument.cantRegistros;
+                var numTotalPag = 0d;
+
+
+                if (cantRegistros != 0)
+                    numTotalPag = Math.Ceiling(Double.Parse(mfilesDocuments.Count() + "") / Double.Parse(cantRegistros  + ""));
+
+
+                if (numTotalPag == 1 && numPagActual > 1)
+                    numPagActual = 1;
+
+
+                var numTotalRegs = -1;
+
+
+                var rangoInicial = cantRegistros * (numPagActual - 1) + 1;
+
+                if (rangoInicial > mfilesDocuments.Count())
+                    rangoInicial = mfilesDocuments.Count() + 1;
+
+                if (numPagActual == 1)
+                    rangoInicial = 1;
+
+                if (numPagActual < 1 || cantRegistros == 0)
+                    rangoInicial = 0;
+
+                var rangoFinal = cantRegistros * numPagActual;
+
+                if (rangoFinal > mfilesDocuments.Count())
+                    rangoFinal = mfilesDocuments.Count();
+
+
+                numTotalRegs = rangoFinal - rangoInicial;
+
+                if (numTotalRegs != 0)
+                    numTotalRegs++;
+
+                if (numTotalRegs == 0 && mfilesDocuments.Count() != 0)
+                    numTotalRegs = mfilesDocuments.Count();
+
 
                 /*objRespuesta += $"rangoInicial:'{rangoInicial}',rangoFinal:'{rangoFinal}',";
                 objRespuesta += $"mfilesDocumentsCount:'{mfilesDocuments.Count()}',";*/
@@ -130,13 +253,24 @@ namespace OperacionesMFiles
                 objRespuesta += "]}";
 
             }
-            else
+            else if (searchDocument.operation == "PDF" || searchDocument.operation == "XML" || searchDocument.operation == "XLS")
             {
                 mfilesDocuments = GetFilesAndMetadata(searchDocument, true);
+
+                if (mfilesDocuments.Count() == 0)
+                {
+                    return new ErrorClass("11", "La búsqueda no devolvió resultados");
+                }
+
 
                 objRespuesta = "{" +
                         $"{mfilesDocuments.ElementAt(0).GetDinersFilesString()}" +
                         "}";
+
+            }
+            else
+            {
+                return new ErrorClass("02", "El operador consultado no es válido");
 
             }
 
@@ -151,6 +285,15 @@ namespace OperacionesMFiles
         {
             List<MFilesDocument> mfilesDocuments = new List<MFilesDocument>();
 
+            //Si no hay condiciones
+            if (searchDocument.GetMFDocConditions().Count() == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("Busqueda no devolvió resultados");
+                //mfilesDocuments.Add(new MFilesDocument("Busqueda no devolvió resultados"));
+                return mfilesDocuments;
+            }
+
+
             try
             {
                 //Se crea la condición de búsqueda
@@ -158,7 +301,7 @@ namespace OperacionesMFiles
                 if (results.Length == 0)
                 {
                     System.Diagnostics.Debug.WriteLine("Busqueda no devolvió resultados");
-                    mfilesDocuments.Add((new MFilesDocument("Busqueda no devolvió resultados")));
+                    //mfilesDocuments.Add((new MFilesDocument("Busqueda no devolvió resultados")));
                     return mfilesDocuments;
                 }
 
@@ -173,11 +316,10 @@ namespace OperacionesMFiles
             }
             catch (Exception ex)
             {
-                mfilesDocuments = new List<MFilesDocument>();
-                mfilesDocuments.Add((new MFilesDocument($"Busqueda no devolvió resultados: {ex.ToString()}")));
                 return mfilesDocuments;
 
             }
+
             return mfilesDocuments;
         }
 
@@ -245,7 +387,6 @@ namespace OperacionesMFiles
                         System.Diagnostics.Debug.WriteLine($"\tArchivo temporal descargado {fileName}");
 
                         var archivoBytes = File.ReadAllBytes(fileName);
-
                         archivosDescargados = Tuple.Create(archivoBytes, file.Extension);
 
                         File.Delete(fileName);
@@ -362,12 +503,23 @@ namespace OperacionesMFiles
 
             foreach (var property in properties)
             {
+                //para no devolver la extensión en la búsqueda
+                if (property.PropertyDef == 1020)
+                {
+                    continue;
+                }
+                
 
-                if (property.PropertyDef >= 1020)
+                if (property.PropertyDef >= 1020 || property.PropertyDef == 100 )
                 {
                     var propertyName = client.PropertyDefOperations.GetPropertyDef(property.PropertyDef).Name;
                     var propertyID = property.PropertyDef;
                     var propertyValue = property.TypedValue.Value != null ? property.TypedValue.Value.ToString() : "";
+
+                    if (property.PropertyDef == 100)
+                    {
+                        propertyValue = property.TypedValue.DisplayValue;
+                    }
 
                     var newProperty = new DocumentProperty(propertyID, propertyValue, propertyName);
 
@@ -404,7 +556,8 @@ namespace OperacionesMFiles
 
                 if (!File.Exists(fileName))
                 {
-                    var errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-2", mensaje = $"Error en la descarga del archivo [{fileName}]", ID = $"{objectVersion.ObjVer.ID}" });
+                    var errorStr = JsonConvert.SerializeObject(new ErrorClass("13", $"Error de descarga de archivo temporal  [{fileName}], ID [{ objectVersion.ObjVer.ID}]"));
+                    
                     base64Files.Add(Encoding.Unicode.GetBytes(errorStr));
                     continue;
 
@@ -413,7 +566,6 @@ namespace OperacionesMFiles
                 System.Diagnostics.Debug.WriteLine($"\tArchivo temporal descargado {fileName}");
 
                 var archivoBytes = File.ReadAllBytes(fileName);
-
                 base64Files.Add(archivoBytes);
 
                 File.Delete(fileName);
@@ -423,5 +575,8 @@ namespace OperacionesMFiles
 
             return base64Files;
         }
+
+
+        
     }
 }

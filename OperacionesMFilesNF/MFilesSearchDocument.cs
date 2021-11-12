@@ -13,9 +13,6 @@ namespace OperacionesMFiles
 
     //Root myDeserializedClass = JsonConvert.DeserializeObject<MFilesSearchDocument>(myJsonResponse); 
 
-
-
-
     public class DocumenPropertyCondition
     {
         public int Id { get; set; }
@@ -27,28 +24,36 @@ namespace OperacionesMFiles
 
         public DocumenPropertyCondition(int id, string name, string value, string type, string condition)
         {
+            if (name == null)
+                name = "XXX";
+
+            if (value == null)
+                value = "";
+
+            if (Type == null)
+                Type = "";
+
+            if (Condition == null)
+                Condition = "";
+
             Id = id;
             Name = name;
             Value = value;
             Type = type;
             Condition = condition;
 
+            //Si el valor es igual al nombre de una clase, se reemplaza el nombre por el id en la variabla value
 
-            foreach (ValueListItem item in IntegracionMFiles.client.ValueListItemOperations.GetValueListItems(1).Items.Where(p => (p.Name == Value)))
-            {
-
-                Value = String.Concat(item.ID);
-
+            if (id == 100) { 
+                foreach (ValueListItem item in IntegracionMFiles.client.ValueListItemOperations.GetValueListItems(1).Items.Where(p => (p.Name == Value)))
+                {
+                    Value = String.Concat(item.ID);
+                }
             }
-
         }
 
-
-
-
         /*
-            M-Files Conditions operator
-                  
+            M-Files Conditions operator                  
             Unknown = 0,
             Equals = 1 = 1,
             LessThan = 2 = 4,
@@ -59,9 +64,7 @@ namespace OperacionesMFiles
             Contains = 7 = 64,
             StartsWith = 8
 
-
             Diners condition operators
-
             NotEqual = 2; NOOO
             NotIn = 128;
             Like = 256;
@@ -78,7 +81,6 @@ namespace OperacionesMFiles
             In = 64;
         */
 
-
         public override string ToString()
         {
             return $"ID {Id}, NAME {Name}, Value {Value}, Type {Type}, Type {Condition} ";
@@ -87,15 +89,11 @@ namespace OperacionesMFiles
 
     public class MFilesSearchDocument
     {
-
         public List<DocumenPropertyCondition> DocumenPropertyConditions = new List<DocumenPropertyCondition>();
-
-
         public override string ToString()
         {
             return $"Properties: {string.Join(",", DocumenPropertyConditions)}";
         }
-
 
         public List<ISearchCondition> GetMFDocConditions()
         {
@@ -103,14 +101,22 @@ namespace OperacionesMFiles
 
             foreach (var item in DocumenPropertyConditions)
             {
-
                 if (item.Id == 0 && item.Name != "Nombre")
                     item.Id = IntegracionMFiles.mfPropertyOperator.GetPropertyDefIDByAlias(item.Name);
 
                 //IntegracionMFiles.mfPropertyOperator.get
-
                 //Se obtiene el tipo de condicion de acuerdo al tipo especificado
-                var condition = (SearchConditionOperators)Enum.Parse(typeof(SearchConditionOperators), item.Condition);
+                SearchConditionOperators condition;
+
+                try
+                {
+                    condition = (SearchConditionOperators)Enum.Parse(typeof(SearchConditionOperators), item.Condition);
+                }
+                catch(Exception e)
+                {
+                    continue;
+                }
+
                 var type = item.Type.ToLower();
 
                 ISearchCondition mfCondition = null;
@@ -141,14 +147,13 @@ namespace OperacionesMFiles
                 }
                 else
                 {
-                    throw new Exception("Tipo de dato es incorrecto");
+                    continue;
+                    //throw new Exception("Tipo de dato es incorrecto");
                 }
 
                 documentConditions.Add(mfCondition);
             }
-
             System.Diagnostics.Debug.WriteLine("Conditions; " + JsonConvert.SerializeObject(documentConditions));
-
             return documentConditions;
         }
 
@@ -158,7 +163,7 @@ namespace OperacionesMFiles
 
             foreach (var item in DocumenPropertyConditions)
             {
-                documentProperties.Add(CreateMFProperty(item.Id, item.Value, item.Type));
+                 documentProperties.Add(CreateMFProperty(item.Id, item.Value, item.Type));
             }
             return documentProperties;
         }
@@ -183,25 +188,14 @@ namespace OperacionesMFiles
                 value = value.Replace(',', '.');
             }
 
-
-
             return new PropertyValue
             {
                 PropertyDef = id,
                 TypedValue = new TypedValue { DataType = mFDataType, Value = value }
             };
         }
-
-
-
-
-
-
     }
-
-
 }
-
 
 /*
     id: "1147", // numero de documento
@@ -209,38 +203,33 @@ namespace OperacionesMFiles
     id: "1148", // ruc
     id: "1149", // total
     id: "39", 	// estado 
-
-     
     {
-	class: "2",
-	properties: [
-		{
-			id: "1147",
-			value: "",
-			type: "text",
-			condition: "equal"
-		},
-		{
-			id: "1002", 
-			value: "",
-			type: "date",
-			condition: "equal"
-		},
-		{
-			id: "1148",
-			value: "",
-			type: "text",
-			condition: "equal"
-		},
-		{
-			id: "1149",
-			value: "12.25",
-			type: "floating",
-			condition: "equal"
-		}
-	]
-}
-
-
-
-     */
+	    class: "2",
+	    properties: [
+		    {
+			    id: "1147",
+			    value: "",
+			    type: "text",
+			    condition: "equal"
+		    },
+		    {
+			    id: "1002", 
+			    value: "",
+			    type: "date",
+			    condition: "equal"
+		    },
+		    {
+			    id: "1148",
+			    value: "",
+			    type: "text",
+			    condition: "equal"
+		    },
+		    {
+			    id: "1149",
+			    value: "12.25",
+			    type: "floating",
+			    condition: "equal"
+		    }
+	    ]
+    }
+*/
