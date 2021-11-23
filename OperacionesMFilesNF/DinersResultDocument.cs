@@ -64,7 +64,12 @@ namespace OperacionesMFiles
                     if (property.Name == "ID_MFILES" || property.Name == "Clase")
                         continue;
 
-                    propertiesObject += $"'{property.Name}': '{property.Value}',";
+                    var value = property.Value;
+
+                    if (property.Name == "FECHA_CORTE" && value.Length == 8)
+                        value = value.Substring(0, 4) + "-" + value.Substring(4, 2) + "-" + value.Substring(6, 2);
+
+                    propertiesObject += $"'{property.Name}': '{value}',";
 
                 }
 

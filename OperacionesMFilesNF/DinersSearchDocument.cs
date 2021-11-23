@@ -99,6 +99,12 @@ namespace OperacionesMFiles
                         break;
                 }
 
+                if (par.field == "FECHA_CORTE")
+                {
+                    par.value = par.value.Replace("-", "");
+                    par.value2 = par.value2.Replace("-", "");
+                }
+
                 DocumenPropertyConditions.Add(new DocumenPropertyCondition(0, par.field, par.value, "Text", condition1));
 
                 if (condition2 != "")

@@ -55,6 +55,8 @@ namespace MFilesWebAPI.Controllers
                 documento.initialize();
                 System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
                 var documents = objIntegracionMFiles.GetDinersDocumentsRedo(documento, true);
+
+                logger.Info("GetPostDinersDocuments / Request BODY: " + JsonConvert.SerializeObject(documento));
                 return documents;
             }
             catch (Exception e)
