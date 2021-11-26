@@ -55,7 +55,11 @@ namespace OperacionesMFiles
             }
             else if (searchDocument.operation == "DOC_HIT_LIST")
             {
-                mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList(); ;
+                mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList();
+
+                mfilesDocuments = mfilesDocuments.OrderByDescending(i => i.DocProperties.Find(x => x.Name.ToUpper() == "FECHA_CORTE").Value).ToList();
+
+
 
                 if (mfilesDocuments.Count() == 0)
                 {
@@ -150,6 +154,9 @@ namespace OperacionesMFiles
 
         }
 
+
+        [Obsolete("GetDinersDocuments is deprecated, please use GetDinersDocumentsRedo instead.")]
+
         public Object GetDinersDocuments(DinersSearchDocument searchDocument, Boolean includeFiles)
         {
             List<MFilesDocument> mfilesDocuments;
@@ -167,7 +174,7 @@ namespace OperacionesMFiles
             }
             else if (searchDocument.operation == "DOC_HIT_LIST")
             {
-                mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList(); ;
+                mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList();
 
                 if (mfilesDocuments.Count() == 0)
                 {
@@ -324,8 +331,7 @@ namespace OperacionesMFiles
         }
 
 
-
-
+        
         /// <summary>
         /// Devuelve una tupla del archivo en bytes y su extensión
         /// </summary>
@@ -576,7 +582,5 @@ namespace OperacionesMFiles
             return base64Files;
         }
 
-
-        
     }
 }
