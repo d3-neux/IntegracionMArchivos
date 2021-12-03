@@ -153,7 +153,7 @@ namespace OperacionesMFiles
 
                 documentConditions.Add(mfCondition);
             }
-            System.Diagnostics.Debug.WriteLine("Conditions; " + JsonConvert.SerializeObject(documentConditions));
+            
             return documentConditions;
         }
 

@@ -50,19 +50,23 @@ namespace MFilesWebAPI.Controllers
         [Route("api/MFiles/GetPostDinersDocuments/")]
         public Object GetPostDinersDocuments(DinersSearchDocument documento)
         {
-            //try 
+            System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} --- START SEARCH");
+            try 
             { 
                 documento.initialize();
                 System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
                 var documents = objIntegracionMFiles.GetDinersDocumentsRedo(documento, true);
 
                 logger.Info("GetPostDinersDocuments / Request BODY: " + JsonConvert.SerializeObject(documento));
+
+                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} --- END");
+
                 return documents;
             }
-            /*catch (Exception e)
+            catch (Exception e)
             {
                 return new OperacionesMFiles.ErrorClass("12", "JSON de request no es válido");
-            }*/
+            }
         }
         
 

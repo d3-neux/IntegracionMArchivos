@@ -14,10 +14,8 @@ namespace OperacionesMFiles
         public static MFWSClient client;
         public static MFWSVaultPropertyDefOperations mfPropertyOperator;
 
-
-
         public static string rutaTemp = Path.Combine(Path.GetTempPath(), "MFilesAPIData");
-
+        public Dictionary<int, PropertyDef> valutProperties;
 
         /// <summary>
         /// Inicializa el cliente de MFiles y recibe la lista de propiedades;
@@ -37,13 +35,23 @@ namespace OperacionesMFiles
                 pass);
 
             mfPropertyOperator = new MFWSVaultPropertyDefOperations(client);
+
+
+            valutProperties = client.PropertyDefOperations.GetPropertyDefs().ToDictionary(pd => pd.ID, pd => pd);
+
+            /*
+            valutProperties.Select(i => $"{i.Key}: {i.Value.Name}").ToList().ForEach( element => {
+                System.Diagnostics.Debug.WriteLine(element);
+            });
+            */
+
         }
 
         public Object GetDinersDocumentsRedo(DinersSearchDocument searchDocument, Boolean includeFiles)
         {
             List<MFilesDocument> mfilesDocuments;
 
-
+            
             if (searchDocument.parameter.Count() == 0)
             {
                 return new ErrorClass("03", "El array parameters se encuentra vacío");
@@ -58,8 +66,6 @@ namespace OperacionesMFiles
                 mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList();
 
                 mfilesDocuments = mfilesDocuments.OrderByDescending(i => i.DocProperties.Find(x => x.Name.ToUpper() == "FECHA_CORTE").Value).ToList();
-
-
 
                 if (mfilesDocuments.Count() == 0)
                 {
@@ -108,10 +114,6 @@ namespace OperacionesMFiles
                     numTotalRegs = mfilesDocuments.Count();
 
 
-                /*objRespuesta += $"rangoInicial:'{rangoInicial}',rangoFinal:'{rangoFinal}',";
-                objRespuesta += $"mfilesDocumentsCount:'{mfilesDocuments.Count()}',";*/
-
-
                 if (numPagActual == numTotalPag && numPagActual != 0)
                     numTotalRegs = rangoFinal - rangoInicial + 1;
 
@@ -135,159 +137,23 @@ namespace OperacionesMFiles
             else if (searchDocument.operation == "PDF" || searchDocument.operation == "XML" || searchDocument.operation == "XLS")
             {
                 mfilesDocuments = GetFilesAndMetadata(searchDocument, true);
+                mfilesDocuments = mfilesDocuments.OrderByDescending(i => i.DocProperties.Find(x => x.Name.ToUpper() == "FECHA_CORTE").Value).ToList();
 
                 if (mfilesDocuments.Count() == 0)
                 {
-                    return new ErrorClass("11", "La búsqueda no devolvió resultados");
+                    return new ErrorClass("11", "La búsqueda no devolvió resultadosXXX");
                 }
 
-                DinersResultDocument dinersResultDocument = new DinersResultDocument(mfilesDocuments.ElementAt(0).Files);
-
-                return dinersResultDocument;
+                return new DinersResultDocument(mfilesDocuments.ElementAt(0).Files);
 
             }
             else
             {
                 return new ErrorClass("02", "El operador consultado no es válido");
-
             }
-
         }
 
-
-        [Obsolete("GetDinersDocuments is deprecated, please use GetDinersDocumentsRedo instead.")]
-
-        public Object GetDinersDocuments(DinersSearchDocument searchDocument, Boolean includeFiles)
-        {
-            List<MFilesDocument> mfilesDocuments;
-
-            string objRespuesta = "{";
-
-            if (searchDocument.parameter.Count() == 0)
-            {
-                return new ErrorClass ("03", "El array parameters se encuentra vacío");
-
-            }
-            else if (searchDocument.idtrace == null)
-            {
-                return new ErrorClass("04", "El campo idTrace es obligatorio para la consulta");
-            }
-            else if (searchDocument.operation == "DOC_HIT_LIST")
-            {
-                mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList();
-
-                if (mfilesDocuments.Count() == 0)
-                {
-                    return new ErrorClass("11", "La búsqueda no devolvió resultados");
-                }
-
-                var numPagActual = searchDocument.numPagActual;
-                var cantRegistros = searchDocument.cantRegistros;
-                var numTotalPag = 0d;
-
-
-                if (cantRegistros != 0)
-                    numTotalPag = Math.Ceiling(Double.Parse(mfilesDocuments.Count() + "") / Double.Parse(cantRegistros  + ""));
-
-
-                if (numTotalPag == 1 && numPagActual > 1)
-                    numPagActual = 1;
-
-
-                var numTotalRegs = -1;
-
-
-                var rangoInicial = cantRegistros * (numPagActual - 1) + 1;
-
-                if (rangoInicial > mfilesDocuments.Count())
-                    rangoInicial = mfilesDocuments.Count() + 1;
-
-                if (numPagActual == 1)
-                    rangoInicial = 1;
-
-                if (numPagActual < 1 || cantRegistros == 0)
-                    rangoInicial = 0;
-
-                var rangoFinal = cantRegistros * numPagActual;
-
-                if (rangoFinal > mfilesDocuments.Count())
-                    rangoFinal = mfilesDocuments.Count();
-
-
-                numTotalRegs = rangoFinal - rangoInicial;
-
-                if (numTotalRegs != 0)
-                    numTotalRegs++;
-
-                if (numTotalRegs == 0 && mfilesDocuments.Count() != 0)
-                    numTotalRegs = mfilesDocuments.Count();
-
-
-                /*objRespuesta += $"rangoInicial:'{rangoInicial}',rangoFinal:'{rangoFinal}',";
-                objRespuesta += $"mfilesDocumentsCount:'{mfilesDocuments.Count()}',";*/
-
-
-                if (numPagActual == numTotalPag && numPagActual != 0)
-                    numTotalRegs = rangoFinal - rangoInicial + 1;
-
-                if (numPagActual == 0 && numTotalPag == 0)
-                    numTotalRegs = mfilesDocuments.Count();
-
-                if (rangoInicial != 0 && rangoInicial == rangoFinal && rangoFinal <= mfilesDocuments.Count())
-                    numTotalRegs = 1;
-
-
-                objRespuesta += $"numPagActual:'{numPagActual}',numTotalPag:'{numTotalPag}',numTotalRegs:'{numTotalRegs}',";
-                objRespuesta += "doc: [";
-
-
-                if (rangoInicial > 0 && rangoInicial <= rangoFinal && rangoFinal <= mfilesDocuments.Count())
-                {
-                    mfilesDocuments = mfilesDocuments.GetRange(rangoInicial - 1, numTotalRegs);
-                }
-
-
-                foreach (MFilesDocument documento in mfilesDocuments)
-                {
-                    objRespuesta += "{" +
-                        $"{documento.GetDinersPropertiesString()}" +
-                        "},";
-                }
-                if (mfilesDocuments.Count() != 0)
-                    objRespuesta = objRespuesta.Substring(0, objRespuesta.Length - 1);
-
-
-                objRespuesta += "]}";
-
-            }
-            else if (searchDocument.operation == "PDF" || searchDocument.operation == "XML" || searchDocument.operation == "XLS")
-            {
-                mfilesDocuments = GetFilesAndMetadata(searchDocument, true);
-
-                if (mfilesDocuments.Count() == 0)
-                {
-                    return new ErrorClass("11", "La búsqueda no devolvió resultados");
-                }
-
-
-                objRespuesta = "{" +
-                        $"{mfilesDocuments.ElementAt(0).GetDinersFilesString()}" +
-                        "}";
-
-            }
-            else
-            {
-                return new ErrorClass("02", "El operador consultado no es válido");
-
-            }
-
-
-            System.Diagnostics.Debug.WriteLine(objRespuesta);
-
-
-            return JsonConvert.DeserializeObject(objRespuesta); ;
-        }
-
+        
         public List<MFilesDocument> GetFilesAndMetadata(MFilesSearchDocument searchDocument, Boolean includeFiles)
         {
             List<MFilesDocument> mfilesDocuments = new List<MFilesDocument>();
@@ -300,26 +166,32 @@ namespace OperacionesMFiles
                 return mfilesDocuments;
             }
 
-
             try
             {
                 //Se crea la condición de búsqueda
-                var results = client.ObjectSearchOperations.SearchForObjectsByConditions(searchDocument.GetMFDocConditions().ToArray());
+                var results = client.ObjectSearchOperations.SearchForObjectsByConditions(300, searchDocument.GetMFDocConditions().ToArray());
+
+                System.Diagnostics.Debug.WriteLine("Conditions: " + string.Join("\n",JsonConvert.SerializeObject(searchDocument.GetMFDocConditions()).Split(new[] { "}," }, StringSplitOptions.None)));
+
+                System.Diagnostics.Debug.WriteLine($"Search results {results.Length}");
+
                 if (results.Length == 0)
                 {
                     System.Diagnostics.Debug.WriteLine("Busqueda no devolvió resultados");
                     //mfilesDocuments.Add((new MFilesDocument("Busqueda no devolvió resultados")));
                     return mfilesDocuments;
                 }
-
-
-                //Si hay resultados
-                foreach (var objectVersion in results)
+                else if (includeFiles)
                 {
-                    var files = includeFiles ? GetDocumentFiles(objectVersion) : null;
-                    mfilesDocuments.Add(new MFilesDocument(GetDocumentProperties(objectVersion), files, objectVersion.ObjVer.ID));
+                    System.Diagnostics.Debug.WriteLine("Solo buscar primer resultado!!!");
 
+                    results = results.Take(1).ToArray();
                 }
+
+                //se obtienen las propiedades de todos los documentos
+                mfilesDocuments = GetDocumentsAndProperties(results, includeFiles);
+
+
             }
             catch (Exception ex)
             {
@@ -332,212 +204,61 @@ namespace OperacionesMFiles
 
 
         
-        /// <summary>
-        /// Devuelve una tupla del archivo en bytes y su extensión
-        /// </summary>
-        /// <param name="codigoERP">Código ERP del documento consultado</param>
-        /// <param name="propertyID">ID de la propiedad de M-Files</param>
-        /// <returns>Tupla con el archivo en byte[] y string con la extension</returns>
-        public Tuple<byte[], string> GetFile(MFilesSearchDocument document)
-        {
+        private List<MFilesDocument> GetDocumentsAndProperties(ObjectVersion [] objectVersionList, Boolean includeFiles) {
 
-            var errorStr = JsonConvert.SerializeObject(new
+            List<MFilesDocument> mFilesDocuments = new List<MFilesDocument>();
+
+            var start = 0;
+            const int blockSize = 50;
+            var objectsAndProperties = new List<Tuple<ObjectVersion, PropertyValue[]>>();
+            do
             {
-                origen = this.GetType().FullName + "." + System.Reflection.MethodBase.GetCurrentMethod().Name + " - 1 "
-                ,
-                mensaje = $"Búsqueda [{document.ToString()}] no devolvió resultados"
-            });
+                var objects = objectVersionList.Skip(start).Take(blockSize).ToList();
+                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")}{start} - {objects.Count} / {objectVersionList.Length}");
+                if (false == objects.Any())
+                    break;
 
-            Tuple<byte[], string> archivosDescargados = new Tuple<byte[], string>(null, errorStr);
-            //try
-            {
-                //Se crea la condición de búsqueda
-                var results = client.ObjectSearchOperations.SearchForObjectsByConditions(document.GetMFDocConditions().ToArray());
-
-                if (results.Length == 0)
+                var properties = client.ObjectPropertyOperations.GetPropertiesOfMultipleObjects(objects.Select(ov => ov.ObjVer).ToArray());
+                for (var i = 0; i < objects.Count; i++)
                 {
-                    System.Diagnostics.Debug.WriteLine(errorStr);
-                    return new Tuple<byte[], string>(null, errorStr);
-                }
-
-                //Si hay resultados
-                foreach (var objectVersion in results)
-                {
-                    var folderPath = new System.IO.DirectoryInfo(Path.Combine(rutaTemp));
-
-                    if (false == folderPath.Exists)
-                        folderPath.Create();
-
-                    GetDocumentProperties(objectVersion);
-
-                    foreach (var file in objectVersion.Files)
-                    {
-                        // Generate a unique file name.
-                        var fileName = System.IO.Path.Combine(folderPath.FullName, file.ID + "." + file.Extension);
-
-                        // Download the file data.
-                        client.ObjectFileOperations.DownloadFile(objectVersion.ObjVer.Type,
-                            objectVersion.ObjVer.ID,
-                            objectVersion.Files[0].ID,
-                            fileName,
-                            objectVersion.ObjVer.Version);
-
-                        if (!File.Exists(fileName))
-                        {
-                            errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-2", mensaje = $"Error en la descarga del archivo [{fileName}]" });
-                            System.Diagnostics.Debug.WriteLine(errorStr);
-                            return new Tuple<byte[], string>(null, errorStr);
-
-                        }
-
-                        System.Diagnostics.Debug.WriteLine($"\tArchivo temporal descargado {fileName}");
-
-                        var archivoBytes = File.ReadAllBytes(fileName);
-                        archivosDescargados = Tuple.Create(archivoBytes, file.Extension);
-
-                        File.Delete(fileName);
-                        System.Diagnostics.Debug.WriteLine($"\tArchivo temporal borrado {fileName}");
-                    }
-                }
-            }
-            /*catch (Exception ex)
-            {
-                errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_GetFile-3", mensaje = ex.ToString() });
-                System.Diagnostics.Debug.WriteLine(ex.ToString());
-                return new Tuple<byte[], string>(null, errorStr);
-
-
-            }*/
-            return archivosDescargados;
-        }
-
-
-        /// <summary>
-        /// Indexa el documento con la información recibida por el web service
-        /// </summary>
-        /// <param name="documento">Objeto de la clase MFIlesDocument</param>
-        /// <returns>Respusta de indexación del documento</returns>
-        /*public String IndexarDocumento(MFilesSearchDocument documento)
-        {
-            var errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-1", mensaje = $"Error desconocido al indexar documentos { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
-            System.Diagnostics.Debug.WriteLine($"\tDocumento Actual: {documento}");
-
-            if (documento == null)
-            {
-                errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-5", mensaje = "Error al recibir JSON con metadatos" });
-                System.Diagnostics.Debug.WriteLine(errorStr);
-                return errorStr;
-            }
-
-            try
-            {
-                var DocumentoMfiles = GetDocumentObjVersion(documento.CodigoERP, documento.GetType().ToString());
-
-                if (DocumentoMfiles == null)
-                    return JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-2", mensaje = $"Documento no ha sido encontrado en M-Files { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
-                else
-                    System.Diagnostics.Debug.WriteLine("DOCUMENTO ENCONTRADO: " + DocumentoMfiles.ObjVer.ID);
-
-                var PropiedadesIndexadas = CrearPropiedades(documento);
-                var documentoNuevoMFiles = client.ObjectOperations.CheckOut(DocumentoMfiles.ObjVer);
-
-                //Se actualizan las propiedades
-                ExtendedObjectVersion resultado;
-
-                try
-                {
-                    resultado = client.ObjectPropertyOperations.SetProperties(documentoNuevoMFiles.ObjVer, PropiedadesIndexadas, false, CancellationToken.None);
-                    System.Diagnostics.Debug.WriteLine("PROPIEDADES ACTUALIZADAS");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine(ex.ToString());
-                    client.ObjectOperations.UndoCheckout(documentoNuevoMFiles.ObjVer);
-                    return JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-3", mensaje = $"Error al actualizar propiedades { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
-                }
-
-
-                var msgStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-OK", mensaje = $"Documento {documentoNuevoMFiles.ObjVer.ID} indexado exitosamente - { DateTime.Now:dd/MM/yyyy HH:mm:ss}" });
-                System.Diagnostics.Debug.WriteLine(msgStr);
-                client.ObjectOperations.CheckIn(resultado.ObjVer);
-               
-                return msgStr;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex.ToString());
-
-                errorStr = JsonConvert.SerializeObject(new { codigo = "IMF_IndexarDocumento-4", mensaje = ex.ToString() });
-                System.Diagnostics.Debug.WriteLine(ex.ToString());
-            }
-            return errorStr;
-        }
-        */
-        /// <summary>
-        /// Crea array de propiedades del documento a actualizar
-        /// </summary>
-        /// <param name="documento">Recibe objeto de la clase MFilesDocument</param>
-        /// <returns>PropertyValue[] </returns>
-
-
-        /// <summary>
-        /// Obtiene un objVersion que coindica con el parámetro de búsqueda
-        /// </summary>
-        /// <param name="codigoERP">Código ERP del documento</param>
-        /// <returns>ObjectVersion del documento encontrado</returns>
-        private ObjectVersion GetDocumentObjVersion(MFilesSearchDocument documento)
-        {
-            //System.Diagnostics.Debug.WriteLine("Condicion!!!" + condition2.ToString());
-            var results = client.ObjectSearchOperations.SearchForObjectsByConditions(documento.GetMFDocConditions().ToArray());
-
-            // Iterate over the results and output them. results 
-            System.Diagnostics.Debug.WriteLine($"There were {results.Length} results returned.");
-
-            foreach (var objectVersion in results)
-            {
-                return objectVersion;
-            }
-            return null;
-        }
-
-        //Get object properties from object version
-        private List<DocumentProperty> GetDocumentProperties(ObjectVersion objectVersion)
-        {
-            var properties = client.ObjectPropertyOperations.GetProperties(objectVersion.ObjVer);
-
-            List<DocumentProperty> DocumentProperties = new List<DocumentProperty>();
-
-            foreach (var property in properties)
-            {
-                //para no devolver la extensión en la búsqueda
-                if (property.PropertyDef == 1020)
-                {
-                    continue;
-                }
+                    var property = properties[i].ToList();
                 
+                    List<DocumentProperty> DocumentProperties = new List<DocumentProperty>();
 
-                if (property.PropertyDef >= 1020 || property.PropertyDef == 100 )
-                {
-                    var propertyName = client.PropertyDefOperations.GetPropertyDef(property.PropertyDef).Name;
-                    var propertyID = property.PropertyDef;
-                    var propertyValue = property.TypedValue.Value != null ? property.TypedValue.Value.ToString() : "";
-
-                    if (property.PropertyDef == 100)
+                    for (var j = 0; j < property.Count; j++)
                     {
-                        propertyValue = property.TypedValue.DisplayValue;
+                        var propID = property[j].PropertyDef;
+                        var propValue = property[j].TypedValue.Value != null ? property[j].TypedValue.Value.ToString() : "";
+                        var propName = valutProperties[propID].Name;
+                        var displayValue = property[j].TypedValue.DisplayValue;
+
+                        //excluye tipo archivo
+                        if (propID > 1020 || propID == 100)
+                        {
+                           if (propID == 100)
+                            {
+                                propValue = displayValue;
+                            }
+
+                            var newProperty = new DocumentProperty(propID, propValue, propName);
+                            DocumentProperties.Add(newProperty);
+                        }
                     }
 
-                    var newProperty = new DocumentProperty(propertyID, propertyValue, propertyName);
-
-                    DocumentProperties.Add(newProperty);
-                    System.Diagnostics.Debug.WriteLine($"{ newProperty }");
+                    var files = includeFiles ? GetDocumentFiles(objects[i]) : null;
+                    mFilesDocuments.Add(new MFilesDocument(DocumentProperties, files, objects[i].ObjVer.ID));
                 }
-            }
+                start += objects.Count;
+            } while (true);
 
-            return DocumentProperties;
+            return mFilesDocuments;
         }
 
-        //Obtiene object version y devuelve lista de byte[] por cada archivo relacionado
+
+
+        
+        
+        //Devuelve todos los documentos relacionados al objectVersion recibido
         public List<byte[]> GetDocumentFiles(ObjectVersion objectVersion)
         {
             List<byte[]> base64Files = new List<byte[]>();
