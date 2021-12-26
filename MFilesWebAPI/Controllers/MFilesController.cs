@@ -19,6 +19,7 @@ namespace MFilesWebAPI.Controllers
         private static readonly string boveda = WebConfigurationManager.AppSettings["MFILES_VAULT"].ToString();
         private static readonly string user = WebConfigurationManager.AppSettings["MFILES_USER"].ToString();
         private static readonly string pass = WebConfigurationManager.AppSettings["MFILES_PASS"].ToString();
+
         private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass);
 
         /// <summary>

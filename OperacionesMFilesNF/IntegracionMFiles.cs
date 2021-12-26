@@ -141,7 +141,7 @@ namespace OperacionesMFiles
 
                 if (mfilesDocuments.Count() == 0)
                 {
-                    return new ErrorClass("11", "La búsqueda no devolvió resultadosXXX");
+                    return new ErrorClass("11", "La búsqueda no devolvió resultados");
                 }
 
                 return new DinersResultDocument(mfilesDocuments.ElementAt(0).Files);
@@ -169,7 +169,11 @@ namespace OperacionesMFiles
             try
             {
                 //Se crea la condición de búsqueda
-                var results = client.ObjectSearchOperations.SearchForObjectsByConditions(300, searchDocument.GetMFDocConditions().ToArray());
+                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} BUSCANDO DOCUMENTOS");
+                var results = client.ObjectSearchOperations.SearchForObjectsByConditions(0, searchDocument.GetMFDocConditions().ToArray());
+
+
+                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} BÚSQUEDA FINALIZADA");
 
                 System.Diagnostics.Debug.WriteLine("Conditions: " + string.Join("\n",JsonConvert.SerializeObject(searchDocument.GetMFDocConditions()).Split(new[] { "}," }, StringSplitOptions.None)));
 
@@ -209,16 +213,19 @@ namespace OperacionesMFiles
             List<MFilesDocument> mFilesDocuments = new List<MFilesDocument>();
 
             var start = 0;
-            const int blockSize = 50;
+            const int blockSize = 300;
             var objectsAndProperties = new List<Tuple<ObjectVersion, PropertyValue[]>>();
             do
             {
                 var objects = objectVersionList.Skip(start).Take(blockSize).ToList();
-                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")}{start} - {objects.Count} / {objectVersionList.Length}");
+                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} CONSULTANDO PROPIEDADES {start} - {objects.Count} / {objectVersionList.Length}");
                 if (false == objects.Any())
                     break;
 
+                
                 var properties = client.ObjectPropertyOperations.GetPropertiesOfMultipleObjects(objects.Select(ov => ov.ObjVer).ToArray());
+
+                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} PROPIEDADES CONSULTADAS");
                 for (var i = 0; i < objects.Count; i++)
                 {
                     var property = properties[i].ToList();
@@ -247,10 +254,13 @@ namespace OperacionesMFiles
 
                     var files = includeFiles ? GetDocumentFiles(objects[i]) : null;
                     mFilesDocuments.Add(new MFilesDocument(DocumentProperties, files, objects[i].ObjVer.ID));
+
                 }
+                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} PROPIEDADES AGREGADAS A RESPONSE");
                 start += objects.Count;
             } while (true);
 
+            System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} FINALIZACIÓN DE BÚSQUEDA");
             return mFilesDocuments;
         }
 
