@@ -17,6 +17,9 @@ namespace OperacionesMFiles
         public static string rutaTemp = Path.Combine(Path.GetTempPath(), "MFilesAPIData");
         public Dictionary<int, PropertyDef> valutProperties;
 
+        public static string dbConnection;
+
+
         /// <summary>
         /// Inicializa el cliente de MFiles y recibe la lista de propiedades;
         /// </summary>
@@ -24,7 +27,7 @@ namespace OperacionesMFiles
         /// <param name="boveda">GUID de la bóveda de Motransa</param>
         /// <param name="user">Usuario</param>
         /// <param name="pass">Contraseña</param>
-        public IntegracionMFiles(String server, String boveda, String user, String pass)
+        public IntegracionMFiles(String server, String boveda, String user, String pass, String dbConnection_)
         {
 
             client = new MFWSClient(server);
@@ -45,13 +48,15 @@ namespace OperacionesMFiles
             });
             */
 
+            dbConnection = dbConnection_;
+
         }
+
 
         public Object GetDinersDocumentsRedo(DinersSearchDocument searchDocument, Boolean includeFiles)
         {
             List<MFilesDocument> mfilesDocuments;
 
-            
             if (searchDocument.parameter.Count() == 0)
             {
                 return new ErrorClass("03", "El array parameters se encuentra vacío");
@@ -63,7 +68,12 @@ namespace OperacionesMFiles
             }
             else if (searchDocument.operation == "DOC_HIT_LIST")
             {
-                mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList();
+
+                //BUSQUEDA DIRECTA A MFILES
+                //mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList();
+
+                mfilesDocuments = DataAccess.GetRecords(searchDocument.GetSQLConditions());
+
 
                 mfilesDocuments = mfilesDocuments.OrderByDescending(i => i.DocProperties.Find(x => x.Name.ToUpper() == "FECHA_CORTE").Value).ToList();
 
@@ -84,9 +94,7 @@ namespace OperacionesMFiles
                 if (numTotalPag == 1 && numPagActual > 1)
                     numPagActual = 1;
 
-
                 var numTotalRegs = -1;
-
 
                 var rangoInicial = cantRegistros * (numPagActual - 1) + 1;
 
@@ -104,7 +112,6 @@ namespace OperacionesMFiles
                 if (rangoFinal > mfilesDocuments.Count())
                     rangoFinal = mfilesDocuments.Count();
 
-
                 numTotalRegs = rangoFinal - rangoInicial;
 
                 if (numTotalRegs != 0)
@@ -112,7 +119,6 @@ namespace OperacionesMFiles
 
                 if (numTotalRegs == 0 && mfilesDocuments.Count() != 0)
                     numTotalRegs = mfilesDocuments.Count();
-
 
                 if (numPagActual == numTotalPag && numPagActual != 0)
                     numTotalRegs = rangoFinal - rangoInicial + 1;
@@ -129,7 +135,6 @@ namespace OperacionesMFiles
                 }
 
                 DinersResultList dinersResultList = new DinersResultList(numPagActual, numTotalPag, numTotalRegs, mfilesDocuments);
-                //System.Diagnostics.Debug.WriteLine("HERE " + dinersResultList);
 
                 return dinersResultList;
 
@@ -169,13 +174,11 @@ namespace OperacionesMFiles
             try
             {
                 //Se crea la condición de búsqueda
-                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} BUSCANDO DOCUMENTOS");
                 var results = client.ObjectSearchOperations.SearchForObjectsByConditions(0, searchDocument.GetMFDocConditions().ToArray());
 
 
-                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} BÚSQUEDA FINALIZADA");
 
-                System.Diagnostics.Debug.WriteLine("Conditions: " + string.Join("\n",JsonConvert.SerializeObject(searchDocument.GetMFDocConditions()).Split(new[] { "}," }, StringSplitOptions.None)));
+                //System.Diagnostics.Debug.WriteLine("Conditions: " + string.Join("\n",JsonConvert.SerializeObject(searchDocument.GetMFDocConditions()).Split(new[] { "}," }, StringSplitOptions.None)));
 
                 System.Diagnostics.Debug.WriteLine($"Search results {results.Length}");
 
@@ -200,7 +203,6 @@ namespace OperacionesMFiles
             catch (Exception ex)
             {
                 return mfilesDocuments;
-
             }
 
             return mfilesDocuments;
@@ -222,7 +224,6 @@ namespace OperacionesMFiles
                 if (false == objects.Any())
                     break;
 
-                
                 var properties = client.ObjectPropertyOperations.GetPropertiesOfMultipleObjects(objects.Select(ov => ov.ObjVer).ToArray());
 
                 System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} PROPIEDADES CONSULTADAS");

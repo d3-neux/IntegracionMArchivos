@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Dapper, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapper.2.0.123\lib\net461\Dapper.dll</HintPath>
+    </Reference>
     <Reference Include="MFaaP.MFWSClient, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MFaaP.MFWSClient.1.2.1-alpha\lib\net46\MFaaP.MFWSClient.dll</HintPath>
     </Reference>
@@ -52,8 +55,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataAccess.cs" />
     <Compile Include="DinersResultDocument.cs" />
     <Compile Include="ErrorClass.cs" />
+    <Compile Include="Historico.cs" />
     <Compile Include="IntegracionMFiles.cs" />
     <Compile Include="MFilesDocument.cs" />
     <Compile Include="DinersSearchDocument.cs" />

@@ -90,10 +90,13 @@ namespace OperacionesMFiles
     public class MFilesSearchDocument
     {
         public List<DocumenPropertyCondition> DocumenPropertyConditions = new List<DocumenPropertyCondition>();
+
         public override string ToString()
         {
             return $"Properties: {string.Join(",", DocumenPropertyConditions)}";
         }
+
+        
 
         public List<ISearchCondition> GetMFDocConditions()
         {

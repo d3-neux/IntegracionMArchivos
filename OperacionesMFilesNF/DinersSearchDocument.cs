@@ -27,8 +27,66 @@ namespace OperacionesMFiles
         public int cantRegistros { get; set; } = 0;
         public string idtrace { get; set; }
 
-
         public List<Parameter> parameter = new List<Parameter>();
+
+        public string GetSQLConditions()
+        {
+            string sqlConditions = "";
+
+            foreach (var item in parameter)
+            {
+                var condition = "";
+                switch (item.@operator.ToLower())
+                {
+                    case "null":
+                    case "":
+                    case "1":
+                        condition = $"{item.field} = '{item.value}'";
+                        break;
+                    case "2":
+                        condition = $"{item.field} != '{item.value}'";
+                        break;
+                    case "4":
+                        condition = $"{item.field} < '{item.value}'";
+                        break;
+                    case "8":
+                        condition = $"{item.field} <= '{item.value}'";
+                        break;
+                    case "16":
+                        condition = $"{item.field} > '{item.value}'";
+                        break;
+                    case "32":
+                        condition = $"{item.field} >= '{item.value}'";
+                        break;
+                    case "64":
+                        condition = $"{item.field} IN ('{item.value}', '{item.value2}')";
+                        break;
+                    case "128":
+                        condition = $"{item.field} NOT IN ('{item.value}', '{item.value2}')";
+                        break;
+                    case "256":
+                        condition = $"{item.field} LIKE '%{item.value}%'";
+                        break;
+                    case "512":
+                        condition = $"{item.field} NOT LIKE '%{item.value}%'";
+                        break;
+                    case "1024":
+                        condition = $"{item.field} BETWEEN '{item.value}' AND '{item.value2}'";
+                        break;
+                    case "2048":
+                        condition = $"{item.field} NOT BETWEEN '{item.value}' AND '{item.value2}'";
+                        break;
+                    default:
+                        condition = "";
+                        break;
+                }
+
+                sqlConditions += $" AND {condition}";
+
+                System.Diagnostics.Debug.WriteLine($"{sqlConditions}");
+            }
+            return sqlConditions;
+        }
 
         public void initialize()
         {

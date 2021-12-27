@@ -31,7 +31,7 @@ namespace OperacionesMFiles
         {
             List<ResultDocument> resultList = new List<ResultDocument>();
 
-            foreach(MFilesDocument document in mFilesDocuments)
+            foreach (MFilesDocument document in mFilesDocuments)
             {
                 resultList.Add(new ResultDocument(document.ObjectID, document.DocProperties));
             }
@@ -52,13 +52,11 @@ namespace OperacionesMFiles
             public ResultDocument(int id, List<DocumentProperty> properties)
             {
                 this.id = id;
-                List<object> propertiesFormated = new List<object>();
-
 
                 String propertiesObject = "";
 
                 //no devuelve resultados si el valor de la propiedad es vacio
-                foreach(DocumentProperty property in properties)
+                foreach (DocumentProperty property in properties)
                 {
                     //if (property.Name == "ID_MFILES" || property.Name == "Clase" || property.Value == "" )
                     if (property.Name == "ID_MFILES" || property.Name == "Clase")

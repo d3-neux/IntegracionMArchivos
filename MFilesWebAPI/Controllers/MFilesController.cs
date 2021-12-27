@@ -4,7 +4,6 @@ using System.Web.Configuration;
 using System.Web.Http;
 using NLog;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 
 namespace MFilesWebAPI.Controllers
 {
@@ -19,8 +18,9 @@ namespace MFilesWebAPI.Controllers
         private static readonly string boveda = WebConfigurationManager.AppSettings["MFILES_VAULT"].ToString();
         private static readonly string user = WebConfigurationManager.AppSettings["MFILES_USER"].ToString();
         private static readonly string pass = WebConfigurationManager.AppSettings["MFILES_PASS"].ToString();
+        private static readonly string dbConnection = WebConfigurationManager.AppSettings["DB_CONNECTION"].ToString();
 
-        private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass);
+        private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass, dbConnection);
 
         /// <summary>
         /// Obtiene un objeto que representa los resultados de una búsqueda
@@ -51,7 +51,6 @@ namespace MFilesWebAPI.Controllers
         [Route("api/MFiles/GetPostDinersDocuments/")]
         public Object GetPostDinersDocuments(DinersSearchDocument documento)
         {
-            System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} --- START SEARCH");
             try 
             { 
                 documento.initialize();
@@ -59,8 +58,6 @@ namespace MFilesWebAPI.Controllers
                 var documents = objIntegracionMFiles.GetDinersDocumentsRedo(documento, true);
 
                 logger.Info("GetPostDinersDocuments / Request BODY: " + JsonConvert.SerializeObject(documento));
-
-                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} --- END");
 
                 return documents;
             }
