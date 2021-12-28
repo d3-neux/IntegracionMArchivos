@@ -72,7 +72,7 @@ namespace OperacionesMFiles
                 //BUSQUEDA DIRECTA A MFILES
                 //mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList();
 
-                mfilesDocuments = DataAccess.GetRecords(searchDocument.GetSQLConditions());
+                mfilesDocuments = DataAccess.GetRecords(searchDocument.GetSQLConditions()).Distinct().ToList();
 
 
                 mfilesDocuments = mfilesDocuments.OrderByDescending(i => i.DocProperties.Find(x => x.Name.ToUpper() == "FECHA_CORTE").Value).ToList();
