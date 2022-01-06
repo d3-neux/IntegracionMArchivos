@@ -8,6 +8,7 @@ namespace OperacionesMFiles
 {
     public class Historico
     {
+        public string Id { get; set; }
         public string Nombre_Titulo { get; set; }
         public string Tipo_Archivo { get; set; }
         public string Fecha_Corte { get; set; }

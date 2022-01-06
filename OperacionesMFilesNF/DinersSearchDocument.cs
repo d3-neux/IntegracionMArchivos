@@ -81,9 +81,9 @@ namespace OperacionesMFiles
                         break;
                 }
 
-                sqlConditions += $" AND {condition}";
+                sqlConditions += $" AND {condition} AND Clase = '{context}'";
 
-                System.Diagnostics.Debug.WriteLine($"{sqlConditions}");
+                //System.Diagnostics.Debug.WriteLine($"{sqlConditions}");
             }
             return sqlConditions;
         }

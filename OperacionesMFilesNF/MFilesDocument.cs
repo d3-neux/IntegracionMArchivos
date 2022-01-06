@@ -45,10 +45,10 @@ namespace OperacionesMFiles
             {
                 var newObjID = newObj.DocProperties.Find(x => x.Name == "ID_MFILES").Value;
                 var documentID = DocProperties.Find(x => x.Name == "ID_MFILES").Value;
-                System.Diagnostics.Debug.WriteLine($"Documentos tienen ID_MFILES {newObjID} - {documentID}");
+                //System.Diagnostics.Debug.WriteLine($"Documentos tienen ID_MFILES {newObjID} - {documentID}");
                 return newObjID == documentID;
             }
-            System.Diagnostics.Debug.WriteLine($"Documentos no tienen ID_MFILES {newObj.GetHashCode()} - {this.GetHashCode()}");
+            //System.Diagnostics.Debug.WriteLine($"Documentos no tienen ID_MFILES {newObj.GetHashCode()} - {this.GetHashCode()}");
             return newObj.GetHashCode() == this.GetHashCode();
         }
 

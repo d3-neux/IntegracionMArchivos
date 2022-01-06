@@ -28,7 +28,7 @@ namespace OperacionesMFiles
 
             foreach (var historico in historicos)
             {
-                
+                historico.Id = historico.ID_Mfiles;
                 List<DocumentProperty> docProperties = new List<DocumentProperty>
                 {
                     //new DocumentProperty(1020, historico.Tipo_Archivo, "TIPO_ARCHIVO"),
@@ -42,12 +42,12 @@ namespace OperacionesMFiles
                     new DocumentProperty(1028, historico.Telefonos_Persona, "TELEFONOS_PERSONA"),
                     new DocumentProperty(1029, historico.Email, "EMAIL"),
                     new DocumentProperty(1030, historico.Fecha_Carga, "FECHA_CARGA"),
-                    //docProperties.Add(new DocumentProperty(1031, historico.ID_Mfiles, "ID_MFILES"));
+                    new DocumentProperty(1030, historico.ID_Mfiles, "ID_MFILES"),
                     new DocumentProperty(1032, historico.Num_Doc_Tribu, "NUM_DOC_TRIBU"),
                     new DocumentProperty(1033, historico.Fecha_Registro, "FECHA_REGISTRO")
                 };
 
-                resultList.Add(new MFilesDocument(docProperties, null, int.Parse(historico.ID_Mfiles)));
+                resultList.Add(new MFilesDocument(docProperties, null, int.Parse(historico.Id)));
 
             }
 
