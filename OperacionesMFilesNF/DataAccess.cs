@@ -30,7 +30,6 @@ namespace OperacionesMFiles
 
             foreach (var historico in historicos)
             {
-                historico.Id = historico.ID_Mfiles;
                 List<DocumentProperty> docProperties = new List<DocumentProperty>
                 {
                     //new DocumentProperty(1020, historico.Tipo_Archivo, "TIPO_ARCHIVO"),

@@ -45,8 +45,8 @@ namespace OperacionesMFiles
             /*
             valutProperties.Select(i => $"{i.Key}: {i.Value.Name}").ToList().ForEach( element => {
                 System.Diagnostics.Debug.WriteLine(element);
-            });
-            */
+            });*/
+            
 
             dbConnection = dbConnection_;
 

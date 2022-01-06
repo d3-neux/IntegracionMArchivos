@@ -43,7 +43,7 @@ namespace OperacionesMFiles
             Condition = condition;
 
             //Si el valor es igual al nombre de una clase, se reemplaza el nombre por el id en la variabla value
-
+            
             if (id == 100) { 
                 foreach (ValueListItem item in IntegracionMFiles.client.ValueListItemOperations.GetValueListItems(1).Items.Where(p => (p.Name == Value)))
                 {
