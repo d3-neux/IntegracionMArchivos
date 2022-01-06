@@ -19,12 +19,14 @@ namespace OperacionesMFiles
 
             var sqlQuery = $"select * from historico where 1 = 1 {conditions}";
 
-            System.Diagnostics.Debug.WriteLine($"SQL QUERY {sqlQuery}");
+
+            System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} SQL QUERY {sqlQuery}");
 
             using (IDbConnection connection = new System.Data.SqlClient.SqlConnection(IntegracionMFiles.dbConnection) )
             {
                 historicos = connection.Query<Historico>(sqlQuery).ToList();
             }
+
 
             foreach (var historico in historicos)
             {
@@ -50,6 +52,7 @@ namespace OperacionesMFiles
                 resultList.Add(new MFilesDocument(docProperties, null, int.Parse(historico.Id)));
 
             }
+
 
             return resultList;
         }

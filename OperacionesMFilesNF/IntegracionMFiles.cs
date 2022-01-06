@@ -72,10 +72,11 @@ namespace OperacionesMFiles
                 //BUSQUEDA DIRECTA A MFILES
                 //mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList();
 
+
                 mfilesDocuments = DataAccess.GetRecords(searchDocument.GetSQLConditions()).Distinct().ToList();
 
-
                 mfilesDocuments = mfilesDocuments.OrderByDescending(i => i.DocProperties.Find(x => x.Name.ToUpper() == "FECHA_CORTE").Value).ToList();
+
 
                 if (mfilesDocuments.Count() == 0)
                 {
@@ -134,7 +135,12 @@ namespace OperacionesMFiles
                     mfilesDocuments = mfilesDocuments.GetRange(rangoInicial - 1, numTotalRegs);
                 }
 
+                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} Calculado");
+
                 DinersResultList dinersResultList = new DinersResultList(numPagActual, numTotalPag, numTotalRegs, mfilesDocuments);
+
+                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} JSON");
+
 
                 return dinersResultList;
 
