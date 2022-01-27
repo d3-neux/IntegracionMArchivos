@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-
+using NLog;
 
 namespace OperacionesMFiles
 {
@@ -14,11 +14,14 @@ namespace OperacionesMFiles
         public static MFWSClient client;
         public static MFWSVaultPropertyDefOperations mfPropertyOperator;
 
+        public static Logger logger;
+
         public static string rutaTemp = Path.Combine(Path.GetTempPath(), "MFilesAPIData");
         public Dictionary<int, PropertyDef> valutProperties;
 
         public static string dbConnection;
 
+        private static string server, boveda, user, pass;
 
         /// <summary>
         /// Inicializa el cliente de MFiles y recibe la lista de propiedades;
@@ -27,8 +30,30 @@ namespace OperacionesMFiles
         /// <param name="boveda">GUID de la bóveda de Motransa</param>
         /// <param name="user">Usuario</param>
         /// <param name="pass">Contraseña</param>
-        public IntegracionMFiles(String server, String boveda, String user, String pass, String dbConnection_)
+        public IntegracionMFiles(String server, String boveda, String user, String pass, String dbConnection, Logger logger)
         {
+            IntegracionMFiles.logger = logger;
+
+            IntegracionMFiles.dbConnection = dbConnection;
+
+            IntegracionMFiles.server = server;
+            IntegracionMFiles.boveda = boveda;
+            IntegracionMFiles.user = user;
+            IntegracionMFiles.pass = pass;
+
+            /*
+            valutProperties.Select(i => $"{i.Key}: {i.Value.Name}").ToList().ForEach( element => {
+                System.Diagnostics.Debug.WriteLine(element);
+            });*/
+        }
+
+
+        //Método de conexión 
+        private void ConectarMFiles()
+        {
+
+            System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} Iniciando Conexión a M-Files");
+            logger.Info($"Iniciando Conexión a M-Files");
 
             client = new MFWSClient(server);
 
@@ -39,19 +64,19 @@ namespace OperacionesMFiles
 
             mfPropertyOperator = new MFWSVaultPropertyDefOperations(client);
 
+            System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} Conectado a M-Files");
+            logger.Info($"Conectado a M-Files");
+
+            System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} Extrayendo propiedades desde bóveda");
+            logger.Info($"Extrayendo lista de propiedades desde bóveda");
 
             valutProperties = client.PropertyDefOperations.GetPropertyDefs().ToDictionary(pd => pd.ID, pd => pd);
 
-            /*
-            valutProperties.Select(i => $"{i.Key}: {i.Value.Name}").ToList().ForEach( element => {
-                System.Diagnostics.Debug.WriteLine(element);
-            });*/
-            
+            System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} Propiedades Extraídas");
+            logger.Info($"Propiedades Extraídas");
 
-            dbConnection = dbConnection_;
 
         }
-
 
         public Object GetDinersDocumentsRedo(DinersSearchDocument searchDocument, Boolean includeFiles)
         {
@@ -72,11 +97,9 @@ namespace OperacionesMFiles
                 //BUSQUEDA DIRECTA A MFILES
                 //mfilesDocuments = GetFilesAndMetadata(searchDocument, false).Distinct().ToList();
 
-
                 mfilesDocuments = DataAccess.GetRecords(searchDocument.GetSQLConditions()).Distinct().ToList();
 
                 mfilesDocuments = mfilesDocuments.OrderByDescending(i => i.DocProperties.Find(x => x.Name.ToUpper() == "FECHA_CORTE").Value).ToList();
-
 
                 if (mfilesDocuments.Count() == 0)
                 {
@@ -87,10 +110,8 @@ namespace OperacionesMFiles
                 var cantRegistros = searchDocument.cantRegistros;
                 var numTotalPag = 0;
 
-
                 if (cantRegistros != 0)
                     numTotalPag = (int) Math.Ceiling(Double.Parse(mfilesDocuments.Count() + "") / Double.Parse(cantRegistros + ""));
-
 
                 if (numTotalPag == 1 && numPagActual > 1)
                     numPagActual = 1;
@@ -135,12 +156,7 @@ namespace OperacionesMFiles
                     mfilesDocuments = mfilesDocuments.GetRange(rangoInicial - 1, numTotalRegs);
                 }
 
-                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} Calculado");
-
                 DinersResultList dinersResultList = new DinersResultList(numPagActual, numTotalPag, numTotalRegs, mfilesDocuments);
-
-                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} JSON");
-
 
                 return dinersResultList;
 
@@ -155,7 +171,10 @@ namespace OperacionesMFiles
                     return new ErrorClass("11", "La búsqueda no devolvió resultados");
                 }
 
-                return new DinersResultDocument(mfilesDocuments.ElementAt(0).Files);
+                var returnDocument = mfilesDocuments.ElementAt(0);
+                logger.Info($"Propiedades de documento retornado {returnDocument.ToString()}");
+                
+                return new DinersResultDocument(returnDocument.Files);
 
             }
             else
@@ -169,10 +188,16 @@ namespace OperacionesMFiles
         {
             List<MFilesDocument> mfilesDocuments = new List<MFilesDocument>();
 
+            if (client == null) {
+                logger.Info("Reconectando Cliente de MFiles");
+                ConectarMFiles();
+            }
+
             //Si no hay condiciones
             if (searchDocument.GetMFDocConditions().Count() == 0)
             {
-                System.Diagnostics.Debug.WriteLine("Busqueda no devolvió resultados");
+                System.Diagnostics.Debug.WriteLine("No hay condiciones en búsqueda");
+                logger.Info("No hay condiciones en búsqueda");
                 //mfilesDocuments.Add(new MFilesDocument("Busqueda no devolvió resultados"));
                 return mfilesDocuments;
             }
@@ -180,9 +205,8 @@ namespace OperacionesMFiles
             try
             {
                 //Se crea la condición de búsqueda
-                var results = client.ObjectSearchOperations.SearchForObjectsByConditions(0, searchDocument.GetMFDocConditions().ToArray());
 
-
+                var results = client.ObjectSearchOperations.SearchForObjectsByConditions(1, searchDocument.GetMFDocConditions().ToArray());
 
                 //System.Diagnostics.Debug.WriteLine("Conditions: " + string.Join("\n",JsonConvert.SerializeObject(searchDocument.GetMFDocConditions()).Split(new[] { "}," }, StringSplitOptions.None)));
 
@@ -191,12 +215,13 @@ namespace OperacionesMFiles
                 if (results.Length == 0)
                 {
                     System.Diagnostics.Debug.WriteLine("Busqueda no devolvió resultados");
+                    logger.Info("Busqueda no devolvió resultados");
+
                     //mfilesDocuments.Add((new MFilesDocument("Busqueda no devolvió resultados")));
                     return mfilesDocuments;
                 }
                 else if (includeFiles)
                 {
-                    System.Diagnostics.Debug.WriteLine("Solo buscar primer resultado!!!");
 
                     results = results.Take(1).ToArray();
                 }
@@ -206,8 +231,9 @@ namespace OperacionesMFiles
 
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
+
                 return mfilesDocuments;
             }
 
@@ -226,13 +252,14 @@ namespace OperacionesMFiles
             do
             {
                 var objects = objectVersionList.Skip(start).Take(blockSize).ToList();
-                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} CONSULTANDO PROPIEDADES {start} - {objects.Count} / {objectVersionList.Length}");
+                //System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} CONSULTANDO PROPIEDADES {start} - {objects.Count} / {objectVersionList.Length}");
+
                 if (false == objects.Any())
                     break;
 
                 var properties = client.ObjectPropertyOperations.GetPropertiesOfMultipleObjects(objects.Select(ov => ov.ObjVer).ToArray());
 
-                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} PROPIEDADES CONSULTADAS");
+                //System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} PROPIEDADES CONSULTADAS");
                 for (var i = 0; i < objects.Count; i++)
                 {
                     var property = properties[i].ToList();
@@ -263,11 +290,11 @@ namespace OperacionesMFiles
                     mFilesDocuments.Add(new MFilesDocument(DocumentProperties, files, objects[i].ObjVer.ID));
 
                 }
-                System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} PROPIEDADES AGREGADAS A RESPONSE");
+                //System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} PROPIEDADES AGREGADAS A RESPONSE");
                 start += objects.Count;
             } while (true);
 
-            System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} FINALIZACIÓN DE BÚSQUEDA");
+            //System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} FINALIZACIÓN DE BÚSQUEDA");
             return mFilesDocuments;
         }
 

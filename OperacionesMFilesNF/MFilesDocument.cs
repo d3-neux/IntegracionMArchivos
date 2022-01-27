@@ -78,8 +78,10 @@ namespace OperacionesMFiles
 
         public MFilesDocument(string errMsg)
         {
-            List<DocumentProperty> DocProperties = new List<DocumentProperty>();
-            DocProperties.Add(new DocumentProperty(0, errMsg, ""));
+            List<DocumentProperty> DocProperties = new List<DocumentProperty>
+            {
+                new DocumentProperty(0, errMsg, "")
+            };
             this.DocProperties = DocProperties;
         }
 

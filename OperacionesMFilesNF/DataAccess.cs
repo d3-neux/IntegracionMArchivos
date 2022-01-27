@@ -27,6 +27,7 @@ namespace OperacionesMFiles
                 historicos = connection.Query<Historico>(sqlQuery).ToList();
             }
 
+            IntegracionMFiles.logger.Info($"SQL: {sqlQuery}");
 
             foreach (var historico in historicos)
             {

@@ -90,8 +90,10 @@ namespace OperacionesMFiles
 
         public void initialize()
         {
-            DocumenPropertyConditions = new List<DocumenPropertyCondition>();
-            DocumenPropertyConditions.Add(new DocumenPropertyCondition(100, "", context, "lookup", "Equals"));
+            DocumenPropertyConditions = new List<DocumenPropertyCondition>
+            {
+                new DocumenPropertyCondition(100, "", context, "lookup", "Equals")
+            };
 
             if (operation != "DOC_HIT_LIST")
             {

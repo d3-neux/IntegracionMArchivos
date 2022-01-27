@@ -43,13 +43,13 @@ namespace OperacionesMFiles
             Condition = condition;
 
             //Si el valor es igual al nombre de una clase, se reemplaza el nombre por el id en la variabla value
-            
+            /*
             if (id == 100) { 
                 foreach (ValueListItem item in IntegracionMFiles.client.ValueListItemOperations.GetValueListItems(1).Items.Where(p => (p.Name == Value)))
                 {
                     Value = String.Concat(item.ID);
                 }
-            }
+            }*/
         }
 
         /*
@@ -102,8 +102,27 @@ namespace OperacionesMFiles
         {
             List<ISearchCondition> documentConditions = new List<ISearchCondition>();
 
+
+
+
             foreach (var item in DocumenPropertyConditions)
             {
+                //Si el valor es igual al nombre de una clase, se reemplaza el nombre por el id en la variabla value
+
+                if (item.Id == 100)
+                {
+                    //var found = false;
+                    foreach (ValueListItem itemValue in IntegracionMFiles.client.ValueListItemOperations.GetValueListItems(1).Items.Where(p => (p.Name == item.Value)))
+                    {
+                        //found = true;
+                        item.Value = String.Concat(itemValue.ID);
+                    }
+
+                    /*if (!found)
+                        return null;*/
+                }
+
+
                 if (item.Id == 0 && item.Name != "Nombre")
                     item.Id = IntegracionMFiles.mfPropertyOperator.GetPropertyDefIDByAlias(item.Name);
 
@@ -115,7 +134,7 @@ namespace OperacionesMFiles
                 {
                     condition = (SearchConditionOperators)Enum.Parse(typeof(SearchConditionOperators), item.Condition);
                 }
-                catch(Exception e)
+                catch(Exception)
                 {
                     continue;
                 }

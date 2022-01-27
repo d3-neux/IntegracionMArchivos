@@ -13,14 +13,15 @@ namespace MFilesWebAPI.Controllers
     /// </summary>
     public class MFilesController : ApiController
     {
-        private static Logger logger = LogManager.GetCurrentClassLogger();
+        public static Logger logger = LogManager.GetCurrentClassLogger();
+
         private static readonly string server = WebConfigurationManager.AppSettings["MFILES_SERVER"].ToString();
         private static readonly string boveda = WebConfigurationManager.AppSettings["MFILES_VAULT"].ToString();
         private static readonly string user = WebConfigurationManager.AppSettings["MFILES_USER"].ToString();
         private static readonly string pass = WebConfigurationManager.AppSettings["MFILES_PASS"].ToString();
         private static readonly string dbConnection = WebConfigurationManager.AppSettings["DB_CONNECTION"].ToString();
 
-        private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass, dbConnection);
+        private static readonly IntegracionMFiles objIntegracionMFiles = new IntegracionMFiles(server, boveda, user, pass, dbConnection, logger);
 
         /// <summary>
         /// Obtiene un objeto que representa los resultados de una búsqueda
@@ -49,25 +50,19 @@ namespace MFilesWebAPI.Controllers
         
         [HttpPost]
         [Route("api/MFiles/GetPostDinersDocuments/")]
-        public Object GetPostDinersDocuments(DinersSearchDocument documento)
+        public object GetPostDinersDocuments(DinersSearchDocument documento)
         {
             try 
-            { 
-                documento.initialize();
-                System.Diagnostics.Debug.WriteLine("JSON: " + JsonConvert.SerializeObject(documento));
-                var documents = objIntegracionMFiles.GetDinersDocumentsRedo(documento, true);
-
-
-                //System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} {documents.ToString()}");
-
+            {
                 logger.Info("GetPostDinersDocuments / Request BODY: " + JsonConvert.SerializeObject(documento));
 
-                //System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToString("hh:mm:ss:ffffff")} Logged");
-
-
+                documento.initialize();
+                
+                var documents = objIntegracionMFiles.GetDinersDocumentsRedo(documento, true);
+                
                 return documents;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return new OperacionesMFiles.ErrorClass("12", "JSON de request no es válido");
             }
